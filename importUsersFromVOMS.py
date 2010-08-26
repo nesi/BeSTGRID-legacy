@@ -5,7 +5,7 @@ import sys
 import ConfigParser
 import ldap
 import ldap.filter
-import MySQLdb
+
 
 parser = ConfigParser.SafeConfigParser();
 parser.read(sys.argv[1]);
@@ -21,6 +21,21 @@ vomsConnection = VOMSCommands.VOMSAdminProxy(host=parser.get("VOMS","host"),
                                            user_cert=parser.get("VOMS","certificate"),
                                            user_key=parser.get("VOMS","key"),
                                            vo=parser.get("VOMS","root_vo"));
+# connection to shared token database
+
+if parser.has_section("MySQL"):
+    import MySQLdb
+    dbConnection = MySQLdb.connect(host=parser.get("MySQL","host") ,
+                               user=parser.get("MySQL","user"),
+                               passwd=parser.get("MySQL","password"),
+                               db=parser.get("MySQL","db"));
+    def get_user_name(sharedToken):
+        cursor = dbConnection.cursor();
+        cursor.execute("SELECT uid FROM tb_st WHERE sharedToken='" + MySQLdb.escape_string(sharedToken) + "'");
+        return cursor.fetchone()
+else:
+    def get_user_name(sharedToken):
+        return None
 
 
 
@@ -38,19 +53,10 @@ maxUid = max([int(uid[1]['uidNumber'][0])
 startUid = maxUid + 1;
 
 # connection to mysql
-dbConnection = MySQLdb.connect(host=parser.get("MySQL","host") ,
-                               user=parser.get("MySQL","user"),
-                               passwd=parser.get("MySQL","password"),
-                               db=parser.get("MySQL","db"));
+
 
 def get_shared_token(dn):
     return dn.split(" ")[-1]
-
-# gets uid from shared token in db
-def get_user_name(sharedToken):
-    cursor = dbConnection.cursor();
-    cursor.execute("SELECT uid FROM tb_st WHERE sharedToken='" + MySQLdb.escape_string(sharedToken) + "'");
-    return cursor.fetchone()
 
 def is_slcs_dn(dn):
     p = re.compile(".*/DC=slcs/.*")
