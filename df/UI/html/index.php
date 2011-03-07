@@ -2,10 +2,18 @@
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>BeSTGRID DataFabric</title>
 
+<?
+$do_redirect = ! isset($_REQUEST["noredirect"]);
+$srv_name=$_SERVER["SERVER_NAME"];
+$redirect_timeout=3;
+?>
+
+<? if ($do_redirect): ?>
 <SCRIPT language="javascript">
 function newwnd() {window.location="/cgi-bin/geoip.cgi"; }
-tm1=setTimeout("newwnd()",10000);
+tm1=setTimeout("newwnd()",<?=$redirect_timeout?>* 1000);
 </SCRIPT>
+<? endif; ?>
 
 <style>
 body {
@@ -58,17 +66,21 @@ h1 b {display:none;}
 <tbody><tr><th align="LEFT"><img id="logo" src="/images/lg_BeSTGRID-DataFabric.gif" alt="BeSTGRID logo"></th></tr></tbody>
 </table>
 <h1>BeSTGRID DataFabric</h1>
+<? if (! $do_redirect) : ?>
+<strong><p>You have been successfully redirected to your nearest DataFabric server: <?=$srv_name?></p></strong>
+<? endif; ?>
 <ul>
-<?
-$srv_name=$_SERVER["SERVER_NAME"];
-print "<li>Log in using your institution's Identity Provider: <a href=\"http://$srv_name/BeSTGRID/home/\">http://$srv_name/BeSTGRID/home/</a>\n";
-print "</li><li>Log in using credentials uploaded to MyProxy: <a href=\"https://$srv_name/BeSTGRID/home/\">https://$srv_name/BeSTGRID/home/</a>\n";
-?>
+<li>Log in using your institution's Identity Provider: <a href="http://<?=$srv_name?>/BeSTGRID/home/">http://<?=$srv_name?>/BeSTGRID/home/</a>
+</li><li>Log in using credentials uploaded to MyProxy: <a href="https://<?=$srv_name?>/BeSTGRID/home/">https://<?=$srv_name?>/BeSTGRID/home/</a>
 </li></ul>
 <h2>User instructions</h2>
 <p>For more information on accessing this service, please see the <strong><a href="http://technical.bestgrid.org/index.php/Using_the_DataFabric">Using the DataFabric</a></strong> manual.</p>
+
+<?php if ($do_redirect): ?>
 <h2>Redirecting to your nearest DataFabric entry point</h2>
-<p>You will be redirected to your nearest DataFabric entry point in 10 seconds...</p>
+<p>You will be redirected to your nearest DataFabric entry point in <?=$redirect_timeout?> seconds...</p>
+<p><strong><a href="/cgi-bin/geoip.cgi">Click here to redirect immediately</a></strong></p>
+<?php endif; ?>
 
 </body>
 </html>
