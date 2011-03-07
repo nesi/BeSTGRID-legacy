@@ -1,0 +1,2735 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title><parameter authenticationrealm/> - Start Page - <parameter organisationname/></title>
+	<link href="<parameter favicon/>" type="image/x-icon" rel="shortcut icon"/>
+    <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+    <meta HTTP-EQUIV="Cache-Control" CONTENT="no-cache">
+    <meta HTTP-EQUIV="Expires" CONTENT="0">
+    <style type="text/css">
+		@import "<parameter dojoroot/>dojoroot/dijit/themes/tundra/tundra.css";
+		@import "<parameter dojoroot/>dojoroot/dojox/grid/resources/Grid.css";
+		@import "<parameter dojoroot/>dojoroot/dojox/grid/resources/tundraGrid.css";
+		/*@import "<parameter dojoroot/>dojoroot/dojo/resources/dojo.css"; This is disabled. Note that dojo.css has never actually been
+		 * 																	used in WEBDavis because it wasn't followed by a ';'. Importing
+		 * 																	it changes the layout dramatically.*/
+		@import "<parameter stylesheet/>";
+    </style>	
+	<script type="text/javascript" src="<parameter dojoroot/>dojoroot/dojo/dojo.js" djConfig="isDebug: false, parseOnLoad: true, preventBackButtonFix: false"></script>
+<!--<script type="text/javascript" src="<parameter dojoroot/>dojoroot/dojo/dojo.js" djConfig="isDebug: true, parseOnLoad: true, preventBackButtonFix: false"></script>-->
+<!--<script type="text/javascript" src="/dojoroot/dojo/dojo.js" djConfig="isDebug: false, parseOnLoad: true, preventBackButtonFix: false"></script> -->
+    <script type="text/javascript">
+    	dojo.require("dojox.grid.DataGrid");
+    	dojo.require("dojo.data.ItemFileWriteStore");
+    	dojo.require("dojox.data.QueryReadStore");
+    	dojo.require("dijit.form.Button");
+    	dojo.require("dijit.Menu");
+    	dojo.require("dijit.form.CheckBox");
+    	dojo.require("dijit.Dialog");
+		dojo.require("dijit.form.TextBox");
+		dojo.require("dojo.parser");
+		dojo.require("dijit.form.FilteringSelect");
+		dojo.require("dojo.io.iframe");
+		dojo.require("dijit.ProgressBar");
+		dojo.require("dojo.back");
+		dojo.require("dijit.layout.BorderContainer");
+		dojo.require("dojox.widget.PlaceholderMenuItem");
+		dojo.require("dijit.form.DropDownButton");
+		dojo.require("dijit.form.Form");
+		   
+		var dynamicObjects = new Array();
+		var firstRender = true;
+		var pageLoaded = false;
+		var synchronous = false/*true*/;
+		var queryParams;
+		var listingLayoutSharingField;
+		var listingLayoutMetadataField;
+		var baseURL = '';
+		
+		dojo.addOnLoad(function() {
+			baseURL = location.href.substring(0, location.href.indexOf('/', 14));
+			queryParams = dojo.queryToObject(window.location.search.slice(1));		
+			if (queryParams.embed == "true") {
+				dojo.html.set(dojo.byId("header"), ''); // Hide header section
+				borderContainer.layout();
+			}
+			
+			if (!(""+dojo.version).indexOf("<parameter requireddojoversion/>") == 0)
+				alert("Internal error: dojo version is "+dojo.version+" - required version is <parameter requireddojoversion/>");
+			pageLoaded = true;
+//			showDebug();
+			initVariables();
+
+			if ("<parameter disablereplicasbutton/>" == "true" && "<parameter isadmin/>" == "false")
+				dojo.html.set(dojo.byId("replicasButtonHolder"), '');  // Hide replicas button
+			if ((!isSecure() && "<parameter authscheme/>" == "password") || isAnonymous())
+				if (dojo.byId("logoutButton") != null)
+					dojo.html.set(dojo.byId("logoutButton"), '');  // Hide logout button for insecure basic auth
+			if (isAnonymous()) { // Hide buttons if anonymous access
+				if (dojo.byId("homeButton") != null)
+					dojo.html.set(dojo.byId("homeButton"), '');  
+				if (dojo.byId("trashButton") != null)
+					dojo.html.set(dojo.byId("trashButton"), '');  
+			} else
+				if (dojo.byId("loginButton") != null)
+					dojo.html.set(dojo.byId("loginButton"), '');  // Hide login button if not anonymous user
+			if ("<parameter sharinguser/>" == "null" || "<parameter sharingkey/>" == "null") {
+				if (dojo.byId("sharingButtonHolder") != null)
+					dojo.html.set(dojo.byId("sharingButtonHolder"), '');  // Hide sharing button if no sharing user configured
+				if (dojo.byId("sharesButton") != null)
+					dojo.html.set(dojo.byId("sharesButton"), '');
+				
+				listingLayout[listingLayoutMetadataField].hidden = true;
+		//		listingGrid.setStructure(listingLayout);
+			}
+											
+			dojo.back.setInitialState(newBackState(escape("<parameter url/>")));
+			initDynamicObjects();
+//			gotoDirectory(escape("<parameter url/>"), false);
+			setToggleButtonState(true);
+			refreshButtons();
+			initConnects();
+			initWidgets();
+			createDomainRow();
+			borderContainer.layout();
+			listingStore.refreshDisplay(true);
+			sharesGrid.setSortIndex(1, true);
+			
+			if (dojo.isMozilla)
+				HTMLElement.prototype.click = function() { // Add a click() method to all elements
+					var evt = this.ownerDocument.createEvent('MouseEvents');
+					evt.initMouseEvent('click', true, true, this.ownerDocument.defaultView, 1, 0, 0, 0, 0, false, false, false, false, 0, null);
+					this.dispatchEvent(evt);
+				}
+		});
+
+		dojo.addOnUnload(function() {
+			pageLoaded = false;
+		});
+
+		function loadedAlert(args) {
+			if (pageLoaded)
+				alert(args);
+		}
+
+		var firstDebug = true;
+		
+		// Show the debug window
+		function showDebug() {
+			try {
+		    	window.top.debugWindow = window.open("", "Debug", "left=0,top=0,width=300,height=700,scrollbars=yes,"+"status=yes,resizable=yes");	
+		    	window.top.debugWindow.opener = self;
+		    	// open the document for writing
+		    	window.top.debugWindow.document.close(); // Clear window
+		    	window.top.debugWindow.document.open();
+		    	window.top.debugWindow.document.write("<HTML><HEAD><TITLE>Debug Window</TITLE></HEAD><BODY><PRE>\n");
+			} catch(e) {
+				if (firstDebug)
+					alert("can't open debug window:"+e+"  Popups might be blocked");
+				firstDebug = false;
+			}
+		}
+		// If the debug window exists, then write to it
+		function debugMessage(text) {
+			try {
+				if (!window.top.debugWindow)
+					showDebug();
+		    	if (window.top.debugWindow && ! window.top.debugWindow.closed) 
+		        	window.top.debugWindow.document.write(text+"\n");
+			} catch(e) {}
+		}
+		// If the debug window exists, then close it
+		function hideDebug() {
+			try {
+		    	if (window.top.debugWindow && ! window.top.debugWindow.closed) {
+		        	window.top.debugWindow.close();
+		      	  window.top.debugWindow = null;
+		    	}
+			} catch(e) {}
+		}
+		// Dump fields of object
+		function dump(message, object) {
+			try {
+				debugMessage(message+" "+dojo.toJson(object, true));
+			} catch(e) {
+				debugMessage("dump: error dumping: "+object+" - "+e);
+			}
+		}
+		
+		function newBackState(url) {
+			var state = {
+				back: 	function(){
+							//alert('back pressed - url='+this.currentUrl); 
+							listingStore.gotoDirectory(this.currentUrl, false);
+						},
+				forward: function(){
+							//alert('forward pressed - url='+this.currentUrl); 
+							listingStore.gotoDirectory(this.currentUrl, false);
+						},
+				changeUrl: true,
+				currentUrl: url
+			}
+//			dump("new state=",state);
+			return state;
+		}
+	
+		var metadataLayout;
+    	var permissionsLayout;
+    	var replicasLayout;
+    	var listingLayout;
+    	var destinationLayout;
+    	var sharesLayout;
+    	
+		var metadataStore;
+		var permissionsStore;
+		var domainsStore;
+		var usersStore;
+		var replicasStore;		
+		var listingStore;
+		var destinationStore;
+		var sharesStore;
+		
+		function initVariables() {
+			metadataLayout = ("<parameter servertype/>" == 'irods') ? 
+		    	[{
+					defaultCell: {editable: true, type: dojox.grid.cells._Widget, styles: 'text-align: left;'},
+					rows: [
+	        			{field: "name", width: "150px", name: "Name", editable: true},
+	        			{field: "value", width: "auto", name: "Value", editable: true},
+	        			{field: "unit", width: "50px", name: "Unit", editable: true}
+	        	]}] : 
+	    	    [{
+					defaultCell: {editable: true, type: dojox.grid.cells._Widget, styles: 'text-align: left;'},
+					rows: [
+						{field: "name", width: "150px", name: "Name", editable: true},
+						{field: "value", width: "auto", name: "Value", editable: true}
+				]}];
+
+	    	permissionsLayout = ("<parameter servertype/>" == 'irods') ?
+	    		[
+	    		 	{field: "username", width: "200px", name: "Username"},
+	        		{field: "permission", width: "auto", name: "Permission"}
+	        	] :
+	        	[
+	        		{field: "username", width: "200px", name: "Username"},
+	        		{field: "domain", width: "200px", name: "Domain"},
+	        		{field: "permission", width: "auto", name: "Permission"}
+	        	];
+	    
+	    	replicasLayout = [
+	    			{field: "resource", width: "250px", name: "Resource"},
+	     			{field: "number", width: "auto", name: "Replica Number"}
+	    		];
+
+	    	sharesLayout = [
+	    		    {field: "file", width: "250px", name: "File", formatter: gridFormatUnescape},
+	    		    {field: "dir", width: "auto", name: "Collection", formatter: gridFormatUnescape},
+	    		    {field: "url", width: "100px", name: "URL", hidden: true}
+	    		];
+
+		    listingLayoutSharingField = 3; // This MUST be the layout row for "sharing" below
+		    listingLayoutMetadataField = 4; // This MUST be the layout row for "metadata" below
+	    	listingLayout = [
+	    	 	   	{field: "name", width: "50%", name: "Name", formatter: gridFormatFileListing, styles: "text-align: left;"},
+	    	 	   	{field: "date", width: "25%", name: "Last Modified", formatter: gridFormatDate},
+	    	 	   	{field: "size", width: "10%", name: "Size", formatter: gridFormatSize},
+	    	 	   	{field: "sharing", width: "15%", name: "QuickShare", formatter: gridFormatSharing, hidden: false},
+	    	 	   	{field: "metadata", width: "15%", name: " ", formatter: gridFormatMetadata, hidden: false}
+	    	 	];
+	    	destinationLayout = [
+	    	        {field: "name", width: "50%", name: "Name", formatter: gridFormatFileDestination, styles: "text-align: left;"}
+	    	    ];	
+
+	    	resetMetadataStore();
+			resetPermissionsStore();
+			resetDomainsStore();
+			resetUsersStore();
+			resetReplicasStore();
+			resetSharesStore(false);
+
+			listingStore = new ListingStore({
+				id: "listingStore", // For debugging
+				grid: listingGrid,
+				lastSort : null,
+				directory: escape("<parameter url/>"),
+				addToHistory: false,
+				_fetchItems: function(request) {
+					if (request.sort == null) {
+						if (listingStore.lastSort == null)
+							listingStore.lastSort = [{attribute:"name", descending: false}];
+						request.sort = listingStore.lastSort;
+					}
+//				alert("sort="+dojo.toJson(request.sort, true));
+					listingStore.lastSort = request.sort;
+					listingStore.inherited("_fetchItems", arguments);
+				},
+				onFetchError: function() {
+					listingStore.setURL(listingStore.urlFields.dir, false, listingStore.urlFields.postfix); // Force reading from servlet cache until instructed otherwise
+					if (listingStore.urlChanged())
+						selectAll(false);
+					listingStore.invalid = false;
+					listingStore.directory = listingStore.getCurrentDirectory(); // Put directory back to last successful one
+					listingStore.setURL(listingStore.lastURL.dir, listingStore.lastURL.noCache, listingStore.lastURL.postfix); // Put url back to last successful one
+					listingStore.refreshDisplay(false);
+				},
+				onFetchSuccess: function() {
+					if (firstRender)
+			    		listingGrid.setSortIndex(0, true);
+//					selectAll(false);
+					setToggleButtonState(true); // Selections have been cleared, so set toggle button accordingly
+					if (listingStore.urlChanged() || firstRender) { // If directory changed
+//						selectAll(false);
+						listingStore.setLastURL(listingStore.urlFields);
+						listingStore.refreshDisplay(true);
+						borderContainer.layout();
+						firstRender = false;
+					} else
+						listingStore.refreshDisplay(false); // Update stuff like status panel even if dir hasn't changed
+				},
+				gotoDirectory: function(dir, addToHistory) {
+					if (!listingStore.isValid()) // Don't do another chdir if already doing one 
+						return;
+					dir = unescapePath(dir); // Seems to be necessary when apache is in front of jetty - restores forward slashes in path
+					listingStore.inherited("gotoDirectory", arguments);
+//					if (cursorBusy())
+//						return;
+					listingStore.setURL(dir, true);
+					// This method works but causes a "loading" message to appear
+//					listingStore.grid._refresh(true);	// Update grid by forcing a store load from new url
+					// This method does everything we want. 
+					listingStore.invalid = true;
+					listingStore.grid._fetch(0, true);
+				},
+				refreshDisplay: function(doMetadata) {
+					dojo.html.set(dojo.byId("listingBreadcrumb"), toBreadcrumb(listingStore.getCurrentDirectory(), "listingStore", true));
+					refreshButtons();
+//					dojo.html.set(dojo.byId("dialogDeleteBulk"), warnBulk(true));
+//					dojo.html.set(dojo.byId("dialogRestoreBulk"), warnBulk(/*true*/)+'<br>');
+		    		dojo.html.set(dojo.byId('aboutUIHandle'), listingStore.uiHandle);
+					var items = -1;
+					if (listingStore != null)
+						items = listingStore._numRows;
+					if (items >= 0) {
+						items--; // Don't count ... Parent Directory, which is always present
+						if (listingStore.grid._isLoaded && items <= 2) { // If less than 3 items there might be a "dir empty" row
+						 	// Have to be careful here. QueryReadStore.getValue will throw an exception if item hasn't been loaded yet (eg for a
+							// dir listing with more than a page's worth of items. 
+							// If 0 or 1 item, should be safe to call getValue to check the row's type.
+							var name = listingStore.getValue(listingStore.grid.getItem(items), "name");
+							if (name.type == "bottom")
+								items--;
+						}
+						setStatusPanel(items+" items listed, "+selectedItemsCount()+" items selected");
+					}
+					if (doMetadata)
+						doDisplayCollectionMetadata(); // This will do a re-layout of root container. Must be done in here because it's asynchronous.
+				}
+			});
+			listingStore.setURL(escape("<parameter url/>"), false),
+			listingStore.setLastURL(listingStore.urlFields);
+			listingGrid.setStore(listingStore);
+	    		    	
+			destinationStore = new ListingStore({
+				id: "destinationStore", // For debugging
+				grid: destinationGrid,
+				directory:escape("<parameter url/>"),
+				_fetchItems: function(request) {
+					request.sort = [{attribute:"name", descending: false}];
+					destinationStore.inherited("_fetchItems", arguments);
+				},
+				onFetchError: function() {
+					destinationStore.setURL(destinationStore.urlFields.dir, false, destinationStore.urlFields.postfix); // Force reading from servlet cache until instructed otherwise
+					destinationStore.setURL(destinationStore.lastURL.dir, destinationStore.lastURL.noCache, destinationStore.lastURL.postfix);
+					destinationStore.refreshDisplay();
+					destinationStore.grid.selection.deselectAll();
+					refreshButtons();
+					destinationStore.show(true);
+				},
+				onFetchSuccess: function() {
+					destinationStore.setLastURL(destinationStore.urlFields);
+					destinationStore.refreshDisplay(); 
+					destinationStore.grid.selection.deselectAll();
+					refreshButtons();
+					destinationStore.show(true);
+				},
+				gotoDirectory: function(dir) {			
+					if (isCursorBusy())
+						return;
+					if (!listingStore.isValid()) // Don't another chdir if already doing one 
+						return;
+					dir = unescapePath(dir); // Seems to be necessary when apache is in front of jetty - restores forward slashes in path
+					destinationStore.directory = dir;
+					destinationStore.addToHistory = false;
+					destinationStore.setURL(dir, true, "&directoriesonly");
+		    		destinationStore.grid.items = null; // Force store load
+					destinationStore.grid._fetch(0, true); // Update grid by initiating a store load from new url
+				},
+				show: function(show) {
+					dojo.style("destinationGrid", "visibility", show ? "visible" : "hidden");
+				},
+				refreshDisplay: function() {
+					dojo.html.set(dojo.byId("destinationBreadcrumb"), toBreadcrumb(destinationStore.getCurrentDirectory(), "destinationStore", false));
+				}
+			});
+			destinationStore.setURL(escape("<parameter url/>"), false, "&directoriesonly");
+			destinationStore.setLastURL(destinationStore.urlFields);
+			destinationGrid.setStructure(destinationLayout);
+			destinationGrid.setStore(destinationStore);
+		}
+
+		function initConnects() {
+			// I've seen strange behaviour for IE8 where it's like two key presses register so the second causes a failure
+			// saying dir already exists. Disabling the following fixed it, but then later hitting Enter didn't cause
+			// createDir to be called. So I'm not sure whether IE8 does or doesn't already have an onKeyPress action!
+			dojo.connect(directoryInputBox, 'onKeyPress', function(e) { 
+				if (e.keyCode == dojo.keys.ENTER) {
+					createDirectory();
+				}
+			});
+			dojo.connect(dojo.byId("renameInputBox"), 'onkeypress', function(e) {
+				if (e.keyCode == dojo.keys.ENTER) {
+					rename(dojo.byId('renameInputBox').value);
+				}
+			});
+			dojo.connect(listingGrid, 'onClick', function(e) {listingStore.refreshDisplay(false)});
+			//dojo.connect(listingGrid, 'onSelectionChanged', function(e) {listingStore.refreshDisplay(false)}); // Can't use this - called for EVERY selection during Select All
+			dojo.connect(destinationGrid, 'onClick', function(e) {refreshButtons()});
+    		dojo.connect(listingGrid, 'onHeaderClick', function(e){
+    			selectAll(false); // Clear selections if change of sort (because selections aren't recalculated to match new row order)
+    		});
+    		dojo.connect(sharesGrid, 'onHeaderClick', function(e){
+    			sharesGrid.selection.deselectAll(); // Clear selections if change of sort (because selections aren't recalculated to match new row order)
+    		});  		
+    		dojo.connect(dojo.byId("shareRadioButton"), 'onClick', function(e){
+    			refreshButtons();
+    		});  		
+    		dojo.connect(dojo.byId("unshareRadioButton"), 'onClick', function(e){
+    			refreshButtons();
+    		});  		
+		}
+		
+		function initWidgets() {
+    		if ("<parameter servertype/>" == 'srb') {
+            	addOption('formPerm', 'all', 'all', 'all');
+            	addOption('formPerm', 'w', 'write', 'write');
+            	addOption('formPerm', 'r', 'read', 'read');
+            	addOption('formPerm', 'n', 'null', 'null');
+            	addOption('formPerm', 'c', 'curate', 'curate');
+            	addOption('formPerm', 't', 'annotate', 'annotate');
+        	} else {
+            	addOption('formPerm', 'all', 'read and write', 'own');
+            	addOption('formPerm', 'w', 'write only', 'modify object');
+            	addOption('formPerm', 'r', 'read only', 'read object');
+            	addOption('formPerm', 'n', 'no access', 'null');
+        	}
+//    		listingGrid.setSortIndex(0, true);
+    		listingGrid.onCanSelect = function(inRowIndex) {
+    			return canSelect(inRowIndex, listingStore, listingGrid);
+    		};
+    		destinationGrid.onCanSelect = function(inRowIndex) {
+    			return canSelect(inRowIndex, destinationStore, destinationGrid);
+    		};
+    		function canSelect(inRowIndex, store, grid){
+    			if (!store)
+    				return false;
+    			if (inRowIndex == 0) // Can't select ... Parent Directory row
+    				return false;
+				if (inRowIndex == store._numRows-1) { // If last row
+					if (store._numRows > 2)  // Can select last row if dir is definitely not empty - there won't be a "dir empty" row
+						return true;
+				 	// Have to be careful here. QueryReadStore.getValue will throw an exception if item hasn't been loaded yet (eg for a
+					// dir listing with more than a page's worth of items. 
+					// If 0 or 1 item, should be safe to call getValue to check the row's type.
+    				var name = store.getValue(grid.getItem(inRowIndex), "name"); 
+    				if (name.type == "bottom")
+    					return false;
+    				return true;
+				}
+    		};
+    		// Re-enable the browser's native right click context menu in listingGrid's cells
+    		listingGrid.onRowContextMenu = function(e) {
+    		};
+    		listingGrid.focus.blurHeader = function() { // This fixes a bug in Firefox
+        		if (listingGrid.focus._colHeadNode)
+      				listingGrid.focus.inherited("blurHeader", arguments);
+    		}
+    		listingGrid.fastScroll = false;
+    		// This stops the column select menu from popping up when right clicking anywhere other than the header bar
+  			gridMenu._openMyself= function(e, cn, iframe){ 
+				if (e.target.className.indexOf("dojoxGridSortNode") > -1)
+	 				gridMenu.inherited("_openMyself", arguments);
+  			}
+    		// PlaceHolderMenuItem causes a "this.domNode.parentNode is null" in IE when this script is unloaded/reloaded.
+    		// The following hack prevents the menu items being destroyed if the domNode is null. The other time unReplace is
+    		// called is when column order is changed, but domNode is valid then, so call the original unReplace.
+    		columnMenu.oldUnReplace = columnMenu.unReplace;
+    		columnMenu.unReplace = function(destroy) {
+    			if (this.domNode != null)
+    				columnMenu.oldUnReplace(destroy);
+    		}
+    		dialogMetadata.closeButtonNode.title = "Close";
+    		dialogPermissions.closeButtonNode.title = "Close";
+
+    		var buttons = document.body.getElementsByTagName('BUTTON');
+    		// The following seems to be necessary for mozilla based browsers on linux. Some buttons start disabled for some reason.
+    		for (var i = 0; i < buttons.length; i++) 
+    			buttons[i].disabled = false;
+		}
+		
+		function resetPermissionsStore(fast) {
+			permissionsStore = resetStore(permissionsStore, permissionsGrid, permissionsLayout, fast);
+		}
+		
+		function resetMetadataStore(fast) {
+			metadataStore = resetStore(metadataStore, metadataGrid, metadataLayout, fast);
+		}
+		
+		function resetReplicasStore() { 
+			replicasStore = resetStore(replicasStore, replicasGrid, replicasLayout, false);
+		}
+		
+		function resetSharesStore(fast) { 
+			sharesStore = resetStore(sharesStore, sharesGrid, sharesLayout, fast);
+		}
+		
+		function resetDomainsStore() { 
+			domainsStore=new dojo.data.ItemFileWriteStore({data: {items:[]}});
+			var domainForm = dijit.byId('formDomain');
+			if (domainForm != null)
+				domainForm.store = domainsStore;
+		}
+
+		function resetUsersStore() { 
+			usersStore=new dojo.data.ItemFileWriteStore({data: {items:[]}});
+	//		formUsername.store = usersStore;
+		}
+
+		
+		function resetStore(store, grid, layout, fast) {
+			if (fast) {
+				if (grid.rowCount == 0) 
+					return store;
+				for (var i = 0; i < store._arrayOfAllItems.length; i++) 
+				try {
+					store.deleteItem(store._arrayOfAllItems[i]);
+				} catch (e) {} // Ignore invalid item errors. Item is probably cached in grid.
+				return store;
+			}
+			store = new dojo.data.ItemFileWriteStore({data: {items:[]}});	
+			grid.setStructure(layout);	
+			grid.setStore(store);	
+			return store;
+		}
+		
+		function addOption(selectName, value, text, title) {
+    		var option = document.createElement('option');
+    		option.text = text;
+    		option.value = value;
+    		option.title = title;
+    		var select = dojo.byId(selectName);
+    		if (select ==null)
+    			return;
+    		try {
+    			select.add(option, null); // standards compliant; doesn't work in IE
+    		} catch(ex) {
+    			select.add(option); // IE only
+    		}
+		}
+
+		function createDomainRow() {
+    		if ("<parameter servertype/>" == 'srb')
+        		dojo.html.set(dojo.byId('domainRow'), 
+        			'<tr>'+
+					'	<td>Domain</td>'+
+					'	<td><input name="domain" id="formDomain" jsId="formDomain" dojoType="dijit.form.FilteringSelect" autocomplete="true" searchAttr="name" store="domainsStore"/></td>'+
+					'</tr>');
+		}
+		
+		function createSelectionButtons(dynamicHTML) {
+			dojo.html.set(dojo.byId("dynamicSelectionButtonsHTML"), dynamicHTML);
+		}
+		
+		function createCurrentDirectoryButtons(dynamicHTML) {
+			var html = 
+				'<table border="0" cellspacing="0" cellpadding="2">'+
+        		'	<tr class="text">'+
+          		'		<td>'+
+				'			<table id="uploadButton" class="activeItem" cellspacing="0" cellpadding="4">'+
+             	'				<tr>'+
+                '					<td onclick="if (!activeItemIsEnabled(\'uploadButton\')) return; enableButton(\'uploadCancelButton\', true); enableButton(\'uploadStartButton\', true); setUploadStatus(\'\'); showUploadDialog(true)"><img src="/images/arrow_up.gif" alt="" width="16" height="16" />&nbsp;Upload File</td>'+
+              	'				</tr>'+
+          		'			</table>'+
+				'		</td>'+
+          		'		<td>'+
+				'			<table id="createDirectoryButton" class="activeItem" cellspacing="0" cellpadding="4">'+
+            	'				<tr>'+
+              	'					<td onclick="if (!activeItemIsEnabled(\'createDirectoryButton\')) return; dialogCreateDir.show()"><img src="/images/folder_new.gif" alt="" width="16" height="16" />&nbsp;Create Directory</td>'+
+            	'				</tr>'+
+          		'			</table>'+
+				'		</td>'+
+				dynamicHTML+
+				'		<td id="trashEmpty"></td>'+
+        		'	</tr>'+
+        		'</table>';
+			dojo.html.set(dojo.byId("currentDirectoryButtonsHTML"), html);
+		}
+		
+		function createSessionButtons(dynamicHTML) {
+			var html =			
+				'<table border="0" cellspacing="0" cellpadding="0" style="padding-right:4px;">'+
+    			'	<tr class="text">'+
+    			dynamicHTML;
+			if (enableDebugButton)
+      			html += '<td><table class="activeItem" style="border:1px solid #CCC;" cellspacing="0" cellpadding="5" onclick="debugButtonHandler()"><tr><td>DEBUG</td></tr></table></td>';  			
+    		html += 
+				'	</tr>'+
+				'</table>';
+			var sessionButtons =  dojo.byId("sessionButtonsHTML");
+			if (sessionButtons)
+				dojo.html.set(sessionButtons, html);
+		}
+
+		function gridFormatUnescape(value) {
+			return decodeURIComponent(value);
+		}
+		
+		function gridFormatFileListing(value) {
+			return gridFormatFile(value, listingStore, "listingStore", true);
+		}
+		function gridFormatFileDestination(value) {
+			return gridFormatFile(value, destinationStore, "destinationStore", false);
+		}
+
+		function gridFormatFile(value, store, storeName, addToHistory) {
+			var filename = decodeURIComponent(value.name);
+			var separator = '/';
+			if (store.getCurrentDirectory() == '/')
+				separator = '';
+			if (value.type == "top" ) // "... Parent Directory" 
+				return '<a class="link" '+
+				           'onclick="'+storeName+'.gotoDirectory(\''+escapeString(encodeURIComponent(getParent(decodeURIComponent(store.getCurrentDirectory()))))+'\','+addToHistory+'); return false" '+
+				           'href="'+escapeString(encodeURI(getParent(decodeURIComponent(store.getCurrentDirectory()))))+'">'+filename+'</a>';
+			if (value.type == "bottom" ) // "Directory empty"
+				return '<i>'+filename+'</i>';
+			var f = filename;
+			if (filename == '/')
+				f = '';
+			if (value.type == "d") 
+				return '<a style="word-wrap: break-word; break-word: break-all;" class="darklink" '+
+				           'onclick="'+storeName+'.gotoDirectory(\''+escapeString(encodeURIComponent(decodeURIComponent(store.getCurrentDirectory())))+separator+escapeString(encodeURIComponent(f))+'\','+addToHistory+'); return false" '+
+				           'href="'+baseURL+escapeString(encodeURI(decodeURIComponent(store.getCurrentDirectory())))+separator+escapeString(encodeURI(f))+'">'+
+				           '<img src="/images/folder.gif" width="16" height="16" border="0"/>&nbsp;'+filename+'</a>';
+			else 
+				return '<a style="word-wrap: break-word; break-word: break-all;" class="darklink" '+
+				           'onclick="window.open('+storeName+'.getCurrentDirectory()+\'/'+escapeString(value.name)+'\'); return false" '+
+				           'href="'+store.getCurrentDirectory()+separator+value.name+'">'+
+				           '<img src="/images/page.gif" width="16" height="16" border="0"/>&nbsp;'+filename+'</a>';
+		}
+		
+		function gridFormatDate(value) {
+			if (value.type == "top" || value.type == "bottom") // Static row?
+				return "";
+			return '<small><small>'+value.value/*.toUTCString()*/+'</small></small>';
+		}
+
+		function gridFormatSize(value) {
+			if (value.type == "top" || value.type == "bottom" || value.type == "d") // Static row or directory?
+				return "";
+			return '<small><small>'+humanReadable(value.size)+'</small></small>';
+		}
+		
+		function gridFormatMetadata(value) {
+			if (value.type == "top" || value.type == "bottom") // Static row?
+				return "";
+			var metadata = value.values;  // Array of metadata values			
+			var html = "";
+			for (var i = 0; i < dynamicObjects.length; i++) { // Search for displayMetadata.selection dynamicObjects
+				var dynamicObject = dynamicObjects[i];
+				if (dynamicObject.objectType == "displayMetadata" && dynamicObject.location == "selection") {
+					var hrefMetadataItem = null;
+					if (dynamicObject.inputs != null && dynamicObject.inputs.metadataName != null) // Get href metadata tag name
+						hrefMetadataItem = dynamicObject.inputs.metadataName;
+					for (var j = 0; j < metadata.length; j++) {  // Search for matching metadata name
+						if (metadata[j].name == dynamicObject.metadataName) {
+							var href = "";
+	  						for (var k = 0; k < metadata.length; k++) // Search for href metadata name
+	  							if (metadata[k].name == hrefMetadataItem) {
+	  							    if (href.length > 0 && j > 0) {  // If more than one matching item, don't create an href
+	  							    	href = "";
+	  							    	break;
+	  							    }
+	  								href = 'href="'+metadata[k].value+'"';
+	  							}
+							html += '<nobr><a '+href+' target="_blank">'+metadata[j].value+'</a></nobr><br>';
+						}
+					}
+				}
+			}		
+			return '<small><small>'+html+'</small></small>';
+		}
+		
+		function gridFormatSharing(value) {
+			if (value.type == "top" || value.type == "bottom") // Static row?
+				return "";
+//			return '<small><small>'+value.value+'</small></small>';
+			return '<small><small><nobr><a href="'+value.value+'" target="_blank">'+value.value+'</a></nobr><br></small></small>';
+		}
+		
+		function displayMetadataIsDefined(location) {
+			for (var i = 0; i < dynamicObjects.length; i++){
+				if (dynamicObjects[i].objectType == "displayMetadata" && dynamicObjects[i].location == location) 
+					return true;
+			}
+			return false;
+		}
+		
+		function initDynamicObjects() {
+			cursorBusy(true);
+		  	dojo.xhrPost({
+	    		url: listingStore.getCurrentDirectory()+"?method=dynamicobjects",
+	    		load: function(responseObject, ioArgs){
+		  			cursorBusy(false);
+					addDynamicObjects(responseObject.items);
+	       			return responseObject;
+	    		},
+	    		error: function(response, ioArgs){
+	    			cursorBusy(false);
+	    			checkOffline(response);
+	      			loadedAlert(errorMessage("dynamicObjects", ioArgs.xhr.status, "Internal error when fetching dynamic objects list:\n\n"+ioArgs.xhr.statusText));
+	      			return response;
+	    		},
+	    		sync: true,
+	    		handleAs: "json"
+	  		});
+
+			var title = null;
+			if (displayMetadataIsDefined("selection")) {
+  				for (var i = 0; i < dynamicObjects.length; i++) {
+  					var dynamicObject = dynamicObjects[i];
+  					if (dynamicObject.objectType == "displayMetadata" && dynamicObject.location == "selection") 
+  						 title = dynamicObject.displayTitle;
+  				}
+			}
+			if (title == null) 
+				listingLayout[listingLayoutMetadataField].hidden = true;
+			else
+  				listingLayout[listingLayoutMetadataField].name = title;
+			listingGrid.setStructure(listingLayout);
+		}
+		
+		function sendDynamicButton(buttonNum) {
+//	alert("sending dynamic button "+buttonNum+": "+dynamicObjects[buttonNum].name);
+			// Get args as json
+//			var data='[{"files":['+listSelectedItems()+'], "args":[';
+			var data='[{"indices":['+listSelectedItems()+'], "args":['; 
+			if (dynamicObjects[buttonNum].inputs.args != undefined) {
+				var firstTime = true;
+				for (var i = 0; i < dynamicObjects[buttonNum].inputs.args.length; i++) {
+					var arg = dynamicObjects[buttonNum].inputs.args[i];
+					if (arg.name != undefined) {
+						if (!firstTime) 
+							data += ',';
+						else
+							firstTime = false;
+						data += '{"name": "'+arg.name+'", "value": "'+dijit.byId("arg"+arg.name).value+'"}';
+					}
+				}
+			}
+			data += ']}]'; 		
+			cursorBusy(true);
+		  	dojo.xhrPost({
+	    		url: listingStore.getCurrentDirectory()+"?method=execbutton&button="+dynamicObjects[buttonNum].name+"&uihandle="+listingStore.uiHandle,
+				headers: {
+			        "content-length": data.length,
+			        "content-type": "text/x-json"
+			    },
+			    putData: data, 
+			    currentDirectory: listingStore.getCurrentDirectory(),
+	    		load: function(responseObject, ioArgs){
+					cursorBusy(false);
+					var notice = responseObject.notice;
+					if (notice != undefined)
+						alert(notice);
+					if (listingStore.getCurrentDirectory() == this.currentDirectory) { 
+						refreshCurrentDirectory();
+						listingStore.refreshDisplay(true);
+					}
+	       			return responseObject;
+	    		},
+	    		error: function(response, ioArgs){
+	    			cursorBusy(false);
+	      			loadedAlert(errorMessage("execbutton", ioArgs.xhr.status, "Internal error when executing dynamic button action:\n\n"+ioArgs.xhr.statusText));
+	      			return response;
+	    		},
+	    		sync: synchronous,
+	    		handleAs: "json"
+	  		});
+		}
+		
+		function errorMessage(method, code, message) {			
+			if (code < 0)
+				return message;
+			switch(code) {
+				case 0:		{
+								loadedAlert(message+/*" Can't connect to server. It may be unavailable."*/"Access denied - you are not currently logged in");
+								reloadWindow();
+								return "";
+							}
+							
+				case 403:	switch(method) {
+								//case "move": 
+								//case "copy": return "source and destination URI are the same";
+								case "permission": return message;
+								case "delete": return message+": you don't have permission";
+								case "unshareall":
+								case "share": return "Failed to share/unshare a resource: "+message;
+								default: return "Refused";
+						  	}
+				case 404:   return "You don't have permission to access it or the collection does not exist.";
+				case 405:	return "path already exists";
+				case 409:	return "You cannot put items here"; 
+				case 410:	{
+								//loadedAlert(message+"\nThis page will be reloaded");
+								loadedAlert(message);
+								reloadWindow();
+								return "";
+							}
+				case 502:	{
+								loadedAlert("The server has dropped your connection. It will now be reset.");
+								resetConnection();
+								return "";
+							}
+				case 503:	{
+								loadedAlert(message+"\nThe server may be down. This page will be reloaded");
+								reloadWindow();
+								return "";
+							}
+				case 412: 	return "destination already exists";
+				default: 	return message;
+			}
+		}
+
+		function checkOffline(response) {
+			// For seamonkey
+			if ((""+response).indexOf("Deferred Cancelled") > -1) // If user used back button after shib logout, detect dead session 
+				reloadWindow();
+		}
+		
+		var cursorCount = 0;	// Depth of cursor busy requests
+
+		// Set cursor to given style. Force will cause change regardless of requests depth
+		function setCursor(busy, force) {
+			document.body.style.cursor = busy ? 'wait' : 'default';
+			if (force)
+				cursorCount = 0;
+		}
+		
+		function isCursorBusy() {
+			return cursorCount > 0;
+		}
+		
+		function cursorBusy(busy) {
+			if (busy) {
+				cursorCount++
+				setCursor(true, false);
+			} else {
+				cursorCount--
+				if (cursorCount < 0)
+					cursorCount = 0;
+				if (cursorCount == 0)
+					setCursor(false, false);
+			}
+		}
+		
+		multipliers = [' bytes', 'K', 'M', 'G'];
+   
+     	function humanReadable(n) { 	
+    		var multiplier = 0;
+    		while (true) {
+    			if (Math.round(n) < 1000)
+    				break;
+    			n = n/1024;
+    			multiplier++;
+    			if (multiplier >= 3)
+    				break;
+    		}
+    		if ((multiplier == 0) && n < 1000)
+    			return ""+Math.floor(n)+multipliers[0];
+    		if (n < 10) {
+				var m = multipliers[multiplier];
+     			return Math.round(n*10)/10.0+m;
+			}
+	   		return Math.round(n)+multipliers[multiplier];
+    	}
+
+		function getParent(dir) {
+			if (dir.length == 0)
+				return '/';
+			if (dir.charAt(dir.length-1) == '/' && !(dir.length == 1))
+				dir = dir.substr(0, dir.length-1);
+			var i = dir.lastIndexOf('/');
+			if (i > -1)
+				dir = dir.substring(0, i);
+			if (dir.length == 0)
+				dir = '/'; 
+			return dir;
+		}
+		
+		function toBreadcrumb(path, storeName, addToHistory) {
+			path = decodeURIComponent(path);
+			var result = "";
+			var subpath = "";
+			var dirs = path.split('/');
+			var prune;
+			if (isTrash(path))
+				prune = <parameter ghosttrashbreadcrumb/>;
+			else
+				prune = <parameter ghostbreadcrumb/>;
+			for (var i = 1; i < dirs.length; i++) {
+				subpath = subpath+'/'+dirs[i];
+				if (i > 1)
+					result = result + " > ";
+				var s = escapeString(encodeURIComponent(subpath));
+				var dir = dirs[i];
+				if (i == 1)
+					dir = '/'+dir;
+				if (i > prune)
+					s = '<a class="link" onclick="'+storeName+'.gotoDirectory(\''+s+'\','+addToHistory+'); return false" href="'+encodeURI(subpath)+'">'+unescape(dir)+'</a>';
+				else
+					s = unescape(dir);
+				result = result+s;
+			}
+			return result;
+		}
+
+		function dynamicButtonHandler(buttonNum) {
+//alert("handling button="+buttonNum+" "+dynamicObjects[buttonNum].name);
+			var button = dynamicObjects[buttonNum];
+			if (button.inputs.args != undefined) {
+				var content = "";
+				for (var i = 0; i < button.inputs.args.length; i++) {
+					var hasName = button.inputs.args[i].name != undefined;
+					if (hasName) {
+						content += '<div style="clear:both; padding-top:10px;">'
+						content += '	<span style="float:left; width:40%; text-align:right;">';
+					}
+					content += button.inputs.args[i].text;
+					if (hasName) {
+						content += '	</span>';
+						content += '	<span style="float:right; width:60%; text-align:left;">&nbsp;<input "name="'+button.inputs.args[i].name+'" id="arg'+button.inputs.args[i].name+'" dojoType="dijit.form.TextBox" value=""/></span>';
+						content += '</div>';
+					} 
+					content += '<br>';
+				}
+				content += '<br><br><div style="text-align: right;">'+
+					'<button type="button" onclick="dynamicDialog.hide(); sendDynamicButton('+buttonNum+')">OK</button>&nbsp;'+
+					'<button type="button" onclick="dynamicDialog.hide()">Cancel</button></dev>';	
+				dynamicDialog.attr("title", button.displayTitle);
+				dynamicDialog.setContent(content);
+				dynamicDialog.show();
+			}
+		}
+		
+		function addDynamicObjects(objects) {
+			var buttonSessionHTML = "";
+			var buttonSelectionHTML = "";
+			var buttonCollectionHTML = "";
+			for (i = 0; i < objects.length; i++) {
+				var object = objects[i];
+				var location = object.location;
+				if (location == "session") {
+					if (object.objectType == "button") 
+						buttonSessionHTML +=
+			      			'<td>'+
+							'	<table id="'+object.name+'" class="activeItem" cellspacing="0" cellpadding="4" onclick="if (!activeItemIsEnabled(\''+object.name+'\')) return; dynamicButtonHandler('+i+')">'+
+			         		'		<tr>'+
+			            	'			<td>&nbsp;'+object.displayTitle+'</td>'+
+			          		'		</tr>'+
+			      			'	</table>'+
+							'</td>';
+				} else
+				if (location == "selection") {
+					if (object.objectType == "button") 
+						buttonSelectionHTML +=
+							'<table width="100%" class="hoverBorderSide"  cellspacing="0" cellpadding="4" onclick="if (!activeItemIsEnabled(\''+object.name+'\')) return; dynamicButtonHandler('+i+')">'+
+				    		'	<tr>'+
+				      		'		<td class="activeItem" id="'+object.name+'"">'+object.displayTitle+'</td>'+
+				    		'	</tr>'+
+				    		'</table>';
+				} else
+				if (location == "collection") {
+					if (object.objectType == "button") 
+						buttonCollectionHTML +=
+		          			'<td>'+
+		          			'	<table id="'+object.name+'" class="activeItem" cellspacing="0" cellpadding="4" onclick="if (!activeItemIsEnabled(\''+object.name+'\')) return; dynamicButtonHandler('+i+')">'+
+	         				'		<tr>'+
+	            			'			<td><img src="/images/1px.png" alt="" style="height:16px; width:0px;" />&nbsp;'+object.displayTitle+'</td>'+
+	            			'		</tr>'+
+	            			'	</table>'+
+	            			'</td>';
+				}
+				dynamicObjects[i] = object;
+			}						
+			createSelectionButtons(buttonSelectionHTML);
+			createCurrentDirectoryButtons(buttonCollectionHTML);
+			createSessionButtons(buttonSessionHTML);
+		}
+
+		function isEnterKey(event) {
+			return event && event.which == 13
+		}
+
+		function isValidFileName(name, warn) {
+			if (name.length == 0) {
+				if (warn)
+					alert("Invalid file name. File names can't be empty.");
+				return false;
+			}
+			if (name.indexOf('/') > -1) {
+				if (warn)
+					alert("Invalid file name. File names can't contain '/'.");
+				return false;
+			}
+			return true;
+		}
+
+		function escapeJSON(s) {
+			return (""+s).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+		}
+
+		function escapeString(s) {
+			return (""+s).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/'/g, '\\\'');
+		}
+
+		function unescapePath(s) {
+			return (""+s).replace(/%2[Ff]/g, '/');
+		}
+
+		function getSelected(grid) {
+		    var result = [];
+		    for (var i = 0; i < grid.selection.selected.length; i++) 
+		        if (grid.selection.selected[i]) 
+		            result.push(i-1);
+		    return result;
+//			return grid.selection.getSelected();
+		}
+
+		function listSelectedItems() {
+			var list = "";
+			if (!listingGrid._isLoaded)
+				return "";
+			var selected = getSelected(listingGrid);
+			if (selected != null)
+			for (var i = 0; i < selected.length; i++) 
+				list = list+"\""+selected[i]+"\",";
+//				list = list+"\""+escapeJSON(unescape(listingGrid.store.getValue(selected[i], "name").name))+"\",";
+			if (list.length > 0)
+				list = list.substring(0, list.length-1);  // remove trailing ','
+			return list;
+		}
+		
+		function listToJSON() {
+			//json format is: [{"files":["file1","file2"...]}]
+//			return "[{\"files\":["+listSelectedItems()+"]}]";
+			return "[{\"indices\":["+listSelectedItems()+"]}]";
+		}
+
+		function getFirstSelectedItem() {
+			if (selectedItemsCount() < 1)
+				return null;
+			return listingGrid.store.getValue(listingGrid.selection.getFirstSelected(), "name").name;
+		}
+		
+		function selectedItemsCount() {
+			if (!listingGrid._isLoaded)
+				return 0;
+			return listingGrid.selection.getSelectedCount();
+		}
+
+		// This is a compromise. To do this accurately, we'd need to give the server a list of all selected items
+		// and ask it whether any are dirs, or we'd have to load all items so the ui could check.
+		// Instead, the algorithm is if not all selected items are loaded, return true (just in case), else check selected items.
+		function directoryIsSelected() {
+			if (!listingGrid._isLoaded)
+				return false;
+			var selected = getSelected(listingGrid);
+			if (selected != null)
+				for (var i = 0; i < selected.length; i++) {
+					var selIndex = selected[i]+1;
+					var item = listingGrid.getItem(selIndex);
+//					if (!item)
+//						return true; // If not all selected items are loaded, must return true in case some are dirs
+					if (item)
+						if (item.i.name.type == "d")
+							return true;
+				}
+			return false;
+		}
+
+		function unknownIsSelected() {
+			if (!listingGrid._isLoaded)
+				return false;
+			var selected = getSelected(listingGrid);
+			if (selected != null)
+				for (var i = 0; i < selected.length; i++) {
+					var selIndex = selected[i]+1;
+					var item = listingGrid.getItem(selIndex);
+					if (!item)
+						return true; // found an item not yet loaded
+				}
+			return false;
+		}
+		
+		function sharedIsSelected(exclusive) {
+			if (!listingGrid._isLoaded)
+				return false;
+			var selected = getSelected(listingGrid);
+			if (selected != null) {
+				var shared = false;
+				var unshared = false;
+				for (var i = 0; i < selected.length; i++) {
+					var selIndex = selected[i]+1;
+					var item = listingGrid.getItem(selIndex);
+//					if (!item)
+//						return true; // If not all selected items are loaded, must return true in case some are dirs
+					if (item) {
+						var state = (item.i.sharing.value.length > 0);
+						shared = shared || state;
+						unshared = unshared || !state;
+					}
+				}
+				if (exclusive)
+					return shared && ! unshared
+				else
+					return shared;
+			}
+			return false;
+		}
+		
+		function toggleAll() {
+			var allSelected = !getToggleButtonState();
+			setToggleButtonState(allSelected);
+			selectAll(!allSelected);
+		}
+		
+		function selectAll(state) {
+			if (state) {
+				if (listingGrid._isLoaded) 
+					listingGrid.selection.selectRange(0, listingGrid.rowCount-1);
+			} else
+				listingGrid.selection.deselectAll();
+			setToggleButtonState(!state);
+			refreshButtons();
+			listingStore.refreshDisplay(false);
+		}
+
+		function setToggleButtonState(state) {
+			var s = state ? "Select all" : "Select none";
+			dojo.byId("toggleAllButton").title = s;
+			dojo.html.set(dojo.byId("toggleAllButton"), s);
+		}
+	
+		function getToggleButtonState() {
+			return dojo.byId('toggleAllButton').title == "Select all";
+		}
+	
+		function enableActiveItem(itemName, enable) {
+			var item = dojo.byId(itemName);
+			if (item != null) { 
+				dojo.addClass(item, enable ? 'activeItem' : 'inactiveItem');
+				dojo.removeClass(item, !enable ? 'activeItem' : 'inactiveItem');
+			}
+		}
+		
+		function activeItemIsEnabled(item) {
+			var item = dojo.byId(item);
+			if (item == null)
+				return false;
+			return dojo.hasClass(item, 'activeItem');
+		}
+		
+		function enableButton(button, enable) {
+			var b = dojo.byId(button);
+			if (b) { // Firefox/firebug seems to require these braces for when b is null!
+				b.disabled = !enable;
+			}
+		}
+
+		function isTrash(url) {
+			return url.indexOf('<parameter trash/>') >= 0;
+		}
+		
+		function enableDynamicWidget(widget) {
+			var singleOnly = false;
+			if (widget.inputs.singleSelection == "true")
+				singleOnly = true;
+			var anonymousDisable = false;
+			if (widget.anonymous == "disable")
+				anonymousDisable = true;
+			var trashDisable = false;
+			if (widget.trash == "disable")
+				trashDisable = true;
+			var enable = (!isAnonymous() || !anonymousDisable) && (!isTrash(listingStore.getCurrentDirectory()) || !trashDisable) 
+						&& ((widget.location != "selection") || ((!singleOnly && (selectedItemsCount() != 0)) || (singleOnly && (selectedItemsCount() == 1))));
+			enableActiveItem(widget.name, enable);			
+		}
+
+		function refreshReplicasButtons() {
+			if (replicasGrid.selection.getSelectedCount() == 0) {
+				enableButton('replicasDeleteButton', false);	// Nothing selected
+				enableButton('replicasReplicateButton', false);
+			} else {
+				var rows = replicasStore._getItemsArray();
+				var replicas = 0;
+				for (var i = 0; i < rows.length; i++)
+					if (rows[i].number[0])
+						replicas++;
+				var item = replicasGrid.selection.getFirstSelected();
+				if (!item)
+					return;
+				var isReplica = replicasStore.getValue(item, "number") != null;	// Selection already is a replica?
+				enableButton('replicasDeleteButton', isReplica && !isAnonymous() && replicas > 2);
+				enableButton('replicasReplicateButton', !isReplica && !isAnonymous());			
+			}
+		}
+		
+		function refreshButtons() {
+			var inTrash = isTrash(listingStore.getCurrentDirectory());
+			var readOnly = listingStore.readOnly;
+			enableActiveItem('uploadButton', !isAnonymous() && ! inTrash && !readOnly);
+			enableActiveItem('createDirectoryButton', !isAnonymous() && !inTrash && !readOnly);
+			enableActiveItem('renameButton', selectedItemsCount() == 1 && !isAnonymous() && !inTrash);
+			enableActiveItem('moveButton', selectedItemsCount() != 0 && !isAnonymous() && !inTrash);
+			enableActiveItem('copyButton', selectedItemsCount() != 0);
+			enableActiveItem('replicasButton', selectedItemsCount() == 1 && !(directoryIsSelected() || unknownIsSelected()) && !inTrash);
+			enableActiveItem('deleteButton', selectedItemsCount() != 0 && !isAnonymous());
+			enableActiveItem('metadataButton', selectedItemsCount() != 0);
+			enableActiveItem('accessControlButton', selectedItemsCount() != 0);
+			enableActiveItem('sharingButton', selectedItemsCount() != 0 && !(directoryIsSelected() || unknownIsSelected()) && !inTrash && !isAnonymous());
+			
+			for (i = 0; i < dynamicObjects.length; i++) 
+				if (dynamicObjects[i].objectType == "button")
+					enableDynamicWidget(dynamicObjects[i]);
+
+			refreshReplicasButtons();
+
+			var trashEmpty = dojo.byId("trashEmpty");
+			if (inTrash) {
+				if (trashEmpty)
+					dojo.html.set(trashEmpty, 
+							'<table id="emptyTrashButton" class="activeItem" cellspacing="0" cellpadding="4">'+
+							'	<tr>'+
+							'		<td onclick="if (!activeItemIsEnabled(\'emptyTrashButton\')) return; selectAll(true); deleteSelection()"><strong><img src="/images/delete.png" alt="" width="16" height="16" />&nbsp;Empty Trash</strong></td>'+
+							'	</tr>'+
+							'</table>'
+					);
+				dojo.html.set(dojo.byId("trashRestoreRow"), 
+	            	'<td class="activeItem" id="trashRestoreButton" onclick="if (!activeItemIsEnabled(\'trashRestoreButton\')) return; if (selectedItemsCount() > 0) /*dialogRestore.show()*/restoreSelection()"/>Restore</strong></td>');
+				dojo.addClass('trashRestoreTable', 'hoverBorderSide');
+				dojo.removeClass('trashRestoreTable', 'invisible');
+			} else {
+				if (trashEmpty)
+					dojo.html.set(trashEmpty, "");
+				dojo.html.set(dojo.byId("trashRestoreRow"), "");
+				dojo.removeClass('trashRestoreTable', 'hoverBorderSide');
+				dojo.addClass('trashRestoreTable', 'invisible');
+			}
+			enableActiveItem('trashRestoreButton', (selectedItemsCount() != 0) && !isAnonymous());
+			enableButton('saveMetadataButton', !isAnonymous());
+			enableButton('stickyPermissionsButton', !isAnonymous());
+			enableButton('applyPermissionsButton', !isAnonymous());
+			enableActiveItem('emptyTrashButton', !isAnonymous());
+			
+			setToggleButtonState(getToggleButtonState());
+			dojo.byId('destinationMoveCopyButton').disabled = (destinationStore.getCurrentDirectory() == listingStore.getCurrentDirectory());
+			var mode = dialogMoveCopy.attr('mode');
+			if (mode)
+				mode = "Move";
+			else
+				mode = "Copy";
+			dojo.html.set(dojo.byId('moveCopyAction'), mode);
+			dialogMoveCopy.attr('title', mode+" Items");
+			dojo.html.set(dojo.byId('destinationMoveCopyButton'), mode);
+
+//			var s = sharedIsSelected() ? "Unshare" : "Share";
+			enableButton('shareOKButton', dojo.byId('shareRadioButton').checked || dojo.byId('unshareRadioButton').checked);
+//			if (button) {
+//				button.title = s;
+//				dojo.html.set(button, s);
+//			}
+			
+			// TBD: For some reason, addMetadataButton would sometimes appear disabled. This is to prevent that. Need to investigate why.
+			enableButton('addMetadataButton', true); 
+			enableButton('uploadStartButton', !uploadInProgress && (dojo.byId('uploadTextField').value.length > 0));
+			enableButton('unshareButton', sharesGrid.rowCount > 0 && sharesGrid.selection.getSelectedCount() > 0);
+			enableButton('generateLinksButton', sharesGrid.rowCount > 0 && sharesGrid.selection.getSelectedCount() > 0);
+		}
+		
+		function setStatusPanel(html) {
+			dojo.html.set(dojo.byId("statusPanelHTML"), html);
+		}
+		
+		function warnBulk(/*verbose*/) {
+			if (selectedItemsCount() > 20)
+//				return "<br>"+selectedItemsCount()+" items are selected, so this might take a while."+(verbose ? " Click on the "+getDir(listingStore.getCurrentDirectory())+" link to refresh." : "");
+				return selectedItemsCount()+" items are selected, so this might take a while.\n\n";
+			else
+				return "";
+		}
+		
+		function getDir(dir) {
+			var i = dir.lastIndexOf("/");
+			if (i < 0)
+				return dir;
+			return dir.substr(i+1);
+		}
+		
+		function doDisplayCollectionMetadata() {
+			if (!displayMetadataIsDefined("collection")) 
+				return;	
+			cursorBusy(true);
+		  	dojo.xhrPost({
+	    		url: listingStore.getCurrentDirectory()+"?method=metadata&uihandle="+listingStore.uiHandle,
+	    		load: function(responseObject, ioArgs){	  
+		  				var html = "";//"&nbsp;&nbsp;&nbsp;&nbsp;Metadata:<br>";
+		  				for (var i = 0; i < dynamicObjects.length; i++) {
+		  					var dynamicObject = dynamicObjects[i];
+		  					if (dynamicObject.objectType == "displayMetadata" && dynamicObject.location == "collection") 
+		  						for (var j = 0; j < responseObject.items.length; j++) 
+		  							if (responseObject.items[j].name == dynamicObject.metadataName)
+		  								html += dynamicObject.displayTitle+responseObject.items[j].value+"<br>";
+		  				}
+		  				dojo.html.set(dojo.byId("displayMetadataHTML"), html);		
+		  				borderContainer.layout();
+		  				cursorBusy(false);
+	       				return responseObject;
+	    			},
+	    		error: function(response, ioArgs){
+	    				cursorBusy(false);
+		    			checkOffline(response);
+		  				borderContainer.layout();
+	      				loadedAlert(errorMessage("metadata", ioArgs.xhr.status, "Error when loading collection metadata:\n\n"+ioArgs.xhr.statusText));
+	      				return response;
+	    			},
+	    		sync: synchronous,
+	    		handleAs: "json"
+	  		});
+		}
+				
+		function addToHistory(url) {
+//			debugMessage("addtohistory:"+url);
+			dojo.back.addToHistory(newBackState(url));
+		}
+
+		function refreshCurrentDirectory() {
+			listingStore.gotoDirectory(listingStore.getCurrentDirectory(), false);
+		}
+
+		function isAnonymous() {
+			return ("<parameter account/>" == "<parameter anonymoususername/>");
+		}
+
+		function createDirectory(){	
+			if (!isValidFileName(directoryInputBox.getValue(), true))
+				return;
+			var dirName = encodeURIComponent(directoryInputBox.getValue());
+			dialogCreateDir.hide();
+			cursorBusy(true);
+			dojo.xhr("MKCOL", {
+				url: listingStore.getCurrentDirectory()+"/"+/*escape(*/dirName/*)*/+"?uihandle="+listingStore.uiHandle,
+			    currentDirectory: listingStore.getCurrentDirectory(),
+	    		sync: synchronous,
+			    load: function(responseObject, ioArgs){
+						cursorBusy(false);
+						if (listingStore.getCurrentDirectory() == this.currentDirectory) { 
+				      		refreshCurrentDirectory();
+			      			listingStore.refreshDisplay(false);
+						}
+			      		return responseObject;
+			   		},
+	    		error: function(response, ioArgs){
+						cursorBusy(false);
+	      				loadedAlert("Failed to create directory "+dirName+":\n\n"+errorMessage("mkcol", ioArgs.xhr.status, ioArgs.xhr.statusText));
+						if (listingStore.getCurrentDirectory() == this.currentDirectory) { 
+		      				listingStore.refreshDisplay(false);
+						}
+	      				return response;
+	    			}
+			});
+			selectAll(false);
+		}
+
+		function validateUploadForm() {
+			if ((dojo.byId("uploadTextField").value.length == 0) || !isValidFileName(dojo.byId("uploadTextField").value, true)) 
+				return false;
+			return true;
+		}
+
+		var uploadInProgress = false;
+		var progressTimer;
+		var TIMERDEFAULT = 5000;
+		var timerInterval = TIMERDEFAULT;
+
+		function setUploadStatus(html) {
+			dojo.html.set(dojo.byId("uploadStatusField"), '<small>'+html+'</small>');
+		}
+
+		function updateTransferStatus() {
+		  	dojo.xhrPost({
+	    		url: "?method=uploadstatus&uihandle="+listingStore.uiHandle,
+	    		load: function(responseObject, ioArgs){	  
+				  		var transferred = responseObject.transferred;
+		  				var total = responseObject.total;
+		  				if (transferred != undefined) 
+							setUploadStatus('Uploading: '+Math.round(transferred/total*100)+'%&nbsp;&nbsp;&nbsp;('+humanReadable(transferred)+' of '+humanReadable(total)+' transferred)');
+		  			    return responseObject;
+	    			},
+	    		error: function(response, ioArgs){
+	    	    		var oldTimer = progressTimer;
+	    	    		timerInterval *= 2;
+	    	    		progressTimer = setInterval("updateTransferStatus()", timerInterval);
+						clearInterval(oldTimer);
+//						setUploadStatus("Uploading: transfer doesn't appear to have started yet.<br><br>Please note that most browsers can't upload files greater than 2GB,<br>and some can't upload zero-byte files.");
+						setUploadStatus("Uploading: transfer doesn't appear to have started yet.<br><br>Your browser may be having problems with the upload.");
+		    			checkOffline(response);
+	      				//loadedAlert(errorMessage("uploadstatus", ioArgs.xhr.status, "Error during upload status update:\n\n"+ioArgs.xhr.statusText));
+	      				return response;
+	    			},
+	    		sync: synchronous,
+	    		handleAs: "json"
+	  		});
+		}
+		
+		function uploadFile(){ 		
+			var statusField = 
+			setUploadStatus("Uploading...");
+			uploadInProgress = true;
+			progressTimer = setInterval("updateTransferStatus()", timerInterval);
+			dojo.io.iframe.send({
+				url: listingStore.getCurrentDirectory()+"?method=upload&uihandle="+listingStore.uiHandle,
+				method: "POST",
+				form: "uploadForm",
+				handleAs: "json",
+	    		sync: synchronous,
+				handle: function(response, ioArgs){
+							showUploadDialog(false);
+//alert("ioargs1= "+dojo.toJson(ioArgs, true));
+//alert("response1="+dojo.toJson(response, true));
+							if (response.name == "TypeError")	// IE bad upload
+								alert("Failed to upload file: The server refused or cancelled the transfer, or your browser can't upload files that large.");
+							else
+							if (response.status == "success") {
+								//alert("Successfully transferred "+response.message+" bytes");
+								window.status="Successfully transferred "+response.message+" bytes";
+							}else 
+								alert("Failed to upload file: "+response.message);
+							refreshCurrentDirectory();						
+							uploadInProgress = false;
+				      		listingStore.refreshDisplay(false);
+							clearInterval(progressTimer);
+							timerInterval = TIMERDEFAULT;
+							return response;
+						},
+				error: function(response, ioArgs) {
+							showUploadDialog(false);
+							if (ioArgs.xhr)
+								alert("Failed to upload file: "+ioArgs.xhr.statusText);
+							uploadInProgress = false;
+				      		listingStore.refreshDisplay(false);
+							clearInterval(progressTimer);
+							timerInterval = TIMERDEFAULT;
+							return response;
+						}
+			});
+		}
+
+		function uploadCancel() {
+			if (!uploadInProgress)  
+				showUploadDialog(false);
+			else {
+				cursorBusy(true);
+				uploadInProgress = false;
+				setUploadStatus("Cancelling...");
+				clearInterval(progressTimer);
+				reloadWindow();	// Is this the only way to kill a transfer?
+			}
+      		listingStore.refreshDisplay(false);
+		}
+
+		var emptyTrashInProgress = false;
+
+		function deleteSelection() {
+			var s = 'Are you sure you want to send the selected items and their contents to the trash folder?';
+				if (isTrash(listingStore.getCurrentDirectory()))
+					s = 'Are you sure you want to permanently delete the selected items and their contents?'
+		    if (confirm(warnBulk()+s))
+		    	deleteFiles(listingStore.getCurrentDirectory());
+		}
+		
+		function deleteFiles(url) {
+//			dialogDelete.hide();
+			if (selectedItemsCount() == 0)
+				return;
+			if (emptyTrashInProgress) {
+				alert("Please wait for trash to finish emptying before deleting more.");
+				return;
+			}
+//			var data='[{"files":['+listSelectedItems()+']}]'; //json format is: [{"files":["file1","file2"...]}]		
+			var data='[{"indices":['+listSelectedItems()+']}]'; //json format is: [{"indices":["file1index","file2index"...]}]		
+			if (isTrash(url))
+				emptyTrashInProgress = true;
+			cursorBusy(true);
+			dojo.xhr("DELETE", {
+				url: url+"?uihandle="+listingStore.uiHandle,
+	    		sync: synchronous,
+				headers: {
+			        "content-length": data.length,
+			        "content-type": "text/x-json"
+			    },
+			    putData: data, 
+			    currentDirectory: listingStore.getCurrentDirectory(),
+			    load: function(responseObject, ioArgs){
+			    		emptyTrashInProgress = false;
+			    		cursorBusy(false);
+						if (listingStore.getCurrentDirectory() == this.currentDirectory) { 
+							refreshCurrentDirectory();
+			      			listingStore.refreshDisplay(false);
+						}
+			      		return responseObject;
+			   		},
+	    		error: function(response, ioArgs){
+			   			emptyTrashInProgress = false;
+			   			cursorBusy(false);
+	      				loadedAlert(errorMessage("delete", ioArgs.xhr.status, ioArgs.xhr.statusText));
+						if (listingStore.getCurrentDirectory() == this.currentDirectory) { 
+		      				refreshCurrentDirectory(); // Reload on error in case some files were deleted
+			      			listingStore.refreshDisplay(false);
+						}
+	      				return response;
+	    			}
+			}, true);
+			selectAll(false);
+		}	
+			
+		function moveCopy(destination, move){
+			dialogMoveCopy.hide();
+			moveCopyFiles(listingStore.getCurrentDirectory(), destination, move, false);
+		}
+
+		function rename(newName){
+			if (!isValidFileName(newName, true))
+				return;
+			newName = encodeURIComponent(newName);
+			dialogRename.hide();
+			moveCopyFiles(listingStore.getCurrentDirectory()+'/'+getFirstSelectedItem(), listingStore.getCurrentDirectory()+'/'+newName, true, true);
+		}
+
+		function restoreSelection() {
+		    if (confirm(warnBulk()+'Are you sure you want to restore the selected items and their contents?'))
+		    	restoreFiles();
+		}
+		
+		function restoreFiles() {
+//			dialogRestore.hide();
+			var destination = "<parameter home/>"+listingStore.getCurrentDirectory().substr("<parameter trash/>".length, listingStore.getCurrentDirectory().length);
+			moveCopyFiles(listingStore.getCurrentDirectory(), destination, true, false);
+		}
+		
+		function moveCopyFiles(url, destination, move, rename) {
+//			alert("moving/copying from "+url+" to "+destination);
+			if (!rename && selectedItemsCount() == 0)
+				return;
+			cursorBusy(true);
+			var data = "";
+			if (!rename)
+				data='[{"indices":['+listSelectedItems()+']}]'; //json format is: [{"indices":["file1index","file2index"...]}]		
+			dojo.xhr(move?"MOVE":"COPY", {
+				url: url+"?uihandle="+listingStore.uiHandle,
+				headers: {
+			        "content-length": data.length,
+			        "content-type": "text/x-json",
+			        "Destination": destination
+			    },
+			    putData: data, 
+			    currentDirectory: listingStore.getCurrentDirectory(),
+	    		sync: synchronous,
+			    load: function(responseObject, ioArgs){
+					cursorBusy(false);
+					if (listingStore.getCurrentDirectory() == this.currentDirectory) { 
+			      		refreshCurrentDirectory();
+		      			listingStore.refreshDisplay(false);
+					}
+			      	return responseObject;
+			    },
+	    		error: function(response, ioArgs){
+					cursorBusy(false);
+	      			loadedAlert("Failed to "+(move?"move":"copy")+" one or more items: "+errorMessage(move?"move":"copy", ioArgs.xhr.status, ioArgs.xhr.statusText));
+					if (move && listingStore.getCurrentDirectory() == this.currentDirectory) { 
+		      			refreshCurrentDirectory(); // Reload on error in case some files were deleted
+		      			listingStore.refreshDisplay(false);
+					}
+	      			return response;
+	    		}
+			}, true);
+			selectAll(false);
+		}
+		
+		function shareFiles(url, share) {
+			if (selectedItemsCount() == 0)
+				return;
+			if (share)
+				share = "share";
+			else
+				share = "unshare";
+//		    if (!confirm(warnBulk()+'Are you sure you want to '+share+' the selected items?'))
+//			    return;
+		
+			var data='[{"indices":['+listSelectedItems()+']}]'; //json format is: [{"indices":["file1index","file2index"...]}]		
+			cursorBusy(true);
+			dojo.xhrPost({
+				url: url+"?method=share&action="+share+"&uihandle="+listingStore.uiHandle,
+	    		sync: synchronous,
+				headers: {
+			        "content-length": data.length,
+			        "content-type": "text/x-json"
+			    },
+			    putData: data, 
+			    currentDirectory: listingStore.getCurrentDirectory(),
+			    load: function(responseObject, ioArgs){
+			    		cursorBusy(false);
+						if (listingStore.getCurrentDirectory() == this.currentDirectory) { 
+							refreshCurrentDirectory();
+							listingStore.refreshDisplay(true);
+						}
+			      		return responseObject;
+			   		},
+	    		error: function(response, ioArgs){
+			   			cursorBusy(false);
+	      				loadedAlert(errorMessage("share", ioArgs.xhr.status, ioArgs.xhr.statusText));
+		      			listingStore.refreshDisplay(true);
+	      				return response;
+	    			}
+			}, true);
+		}
+			
+		function unshareAll() {
+			var list = "";
+			var selected = getGridSelection(sharesGrid);
+			showShares(false);
+			if (selected != null)
+				for (var i = 0; i < selected.length; i++) 
+					list += "\""+escapeJSON(encodeURI(decodeURIComponent(selected[i].dir+"/"+selected[i].file)))+"\",";
+			if (list.length > 0)
+				list = list.substring(0, list.length-1);  // remove trailing ','
+			
+			var data ='[{"files":['+list+']}]'; //json format is: [{"files":["file1","file2"...]}]		
+			cursorBusy(true);
+			dojo.xhrPost({
+				url: "?method=unshareall&uihandle="+listingStore.uiHandle,
+	    		sync: synchronous,
+				headers: {
+			        "content-length": data.length,
+			        "content-type": "text/x-json"
+			    },
+			    putData: data, 
+			    load: function(responseObject, ioArgs){
+			    		cursorBusy(false);
+//						if (listingStore.getCurrentDirectory() == this.currentDirectory) { 
+							refreshCurrentDirectory();
+							listingStore.refreshDisplay(true);
+//						}
+			      		return responseObject;
+			   		},
+	    		error: function(response, ioArgs){
+			   			cursorBusy(false);
+	      				loadedAlert(errorMessage("unshareall", ioArgs.xhr.status, ioArgs.xhr.statusText));
+						refreshCurrentDirectory();
+		      			listingStore.refreshDisplay(true);
+	      				return response;
+	    			}
+			}, true);
+		}
+			
+		function getShares() {
+			cursorBusy(true);	
+		  	dojo.xhrPost({
+	    		url: "?method=shares&uihandle="+listingStore.uiHandle,
+	    		load: function(responseObject, ioArgs){    
+	 					cursorBusy(false);
+						sharesStore=new dojo.data.ItemFileWriteStore({data: responseObject});
+						sharesGrid.setStore(sharesStore);	 
+						sharesGrid.selection.deselectAll();     			
+	       				return responseObject;
+	    			},
+	    		error: function(response, ioArgs){
+	       				cursorBusy(false);
+	      				loadedAlert(errorMessage("shares", ioArgs.xhr.status, ioArgs.xhr.statusText));
+	      				return response;
+	    			},
+	    		sync: synchronous,
+	    		handleAs: "json"
+	  		});
+		}
+
+		function loadMetadataFromServer(url){
+			cursorBusy(true);
+		  	dojo.xhrPost({
+	    		url: url+"?method=metadata&uihandle="+listingStore.uiHandle,
+	    		load: function(responseObject, ioArgs){	  
+		  				cursorBusy(false);
+						metadataStore = new dojo.data.ItemFileWriteStore({data: responseObject});
+						metadataGrid.setStore(metadataStore);	      			
+	       				return responseObject;
+	    			},
+	    		error: function(response, ioArgs){
+	    				cursorBusy(false);
+	      				loadedAlert(errorMessage("metadata", ioArgs.xhr.status, "Error when loading metadata:\n\n"+ioArgs.xhr.statusText));
+	      				return response;
+	    			},
+		    	sync: synchronous,
+	    		handleAs: "json"
+	  		});
+		}
+
+		function getMetadata(batch){
+			var metadataURL = "";
+			resetMetadataStore(true);
+			if (!batch){
+//				resetMetadataStore(true);
+				metadataURL = listingStore.getCurrentDirectory()+"/"+/*escape(*/getFirstSelectedItem()/*)*/;
+				loadMetadataFromServer(metadataURL);
+			}
+			dialogMetadata.attr("url", metadataURL);
+			enableButton('refreshMetadataButton', !batch);	// Don't want the refresh button active in batch mode
+			dialogMetadata.show();
+		}
+
+		function refreshMetadata(url){
+			loadMetadataFromServer(url);
+		}
+
+		function addMetadata(){
+	        // set the properties for the new item:
+	        var myNewItem = ("<parameter servertype/>" == 'irods') ?
+	        	{name: "name", value: "value", unit: "unit"} :
+	        	{name: "name", value: "value"};
+	        // Insert the new item into the store:
+	        metadataStore.newItem(myNewItem);
+		}
+		
+		function delMetadata(){
+	        // Get all selected items from the Grid:
+	        var items = metadataGrid.selection.getSelected();
+	        if (items.length){
+	            // Iterate through the list of selected items.
+	            // The current item is available in the variable "selectedItem" within the following function:
+	            dojo.forEach(items, function(selectedItem) {
+	                if (selectedItem !== null) {
+	                    // Delete the item from the data store:
+	                    metadataStore.deleteItem(selectedItem);
+	                }
+	            }); 
+	        } 
+		}
+		
+		function saveMetadata(){
+			if (selectedItemsCount() == 0)
+				return;
+
+			//json format is: [{"indices":["fileindex1","fileindex2"...],"metadata":[{"name":"foo","value":"bar"},{"name":"foo2","value":"bar2"}...]}]
+			var data=listToJSON();
+			data = data.substring(0, data.length-2);	// Trim '}]' off end 
+			data += ",\"metadata\":[";
+			for (var i = 0; i < metadataGrid.rowCount; i++){
+				if (i > 0) 
+					data += ",";
+				if ("<parameter servertype/>" == 'srb') 
+					data += "{\"name\":\""+escapeJSON(metadataGrid.getItem(i).name)+"\", \"value\":\""+escapeJSON(metadataGrid.getItem(i).value)+"\"}";
+				else
+					data += "{\"name\":\""+escapeJSON(metadataGrid.getItem(i).name)+"\", \"value\":\""+escapeJSON(metadataGrid.getItem(i).value)+"\", \"unit\":\""+escapeJSON(metadataGrid.getItem(i).unit)+"\"}";
+			}
+			data += "]}]";
+			cursorBusy(true);
+		  	dojo.rawXhrPost({
+	    		url: listingStore.getCurrentDirectory()+"?method=metadata&uihandle="+listingStore.uiHandle,
+			    headers: {
+			        "content-length": data.length,
+			        "content-type": "text/x-json"
+			    },
+			    postData: data,
+	    		load: function(responseObject, ioArgs){
+			    		cursorBusy(false);
+						metadataStore=new dojo.data.ItemFileWriteStore({data: responseObject});
+						metadataGrid.setStore(metadataStore);	
+	       				return responseObject;
+	    			},
+	    		error: function(response, ioArgs){
+	    				cursorBusy(false);
+	      				loadedAlert(errorMessage("metadata", ioArgs.xhr.status, "Error when updating metadata:\n\n"+ioArgs.xhr.statusText));
+	      				return response;
+	    			},
+	    		sync: synchronous,
+	    		handleAs: "json"
+	  		});
+		}
+
+		function showMetadata() {
+//			var selectedCount = selectedItemsCount();
+//			if (selectedCount == 0)
+//				return;
+			getMetadata(selectedItemsCount() > 1);				
+		}
+
+		function getDomains(url){
+			cursorBusy(true);
+		  	dojo.xhrPost({
+	    		url: url+"&uihandle="+listingStore.uiHandle,
+	    		load: function(responseObject, ioArgs){
+		  			cursorBusy(false);
+					domainsStore = new dojo.data.ItemFileWriteStore({data: responseObject});
+					var formDomainObj = dijit.byId('formDomain');
+					formDomainObj.store = domainsStore;
+					formDomainObj.onChange = function(val){
+					//	formUsername.textbox.value = "";
+					//	formUsername.valueNode.value = "";
+						getUsers(listingStore.getCurrentDirectory()+"?method=userlist&domain="+formDomainObj.item.name);
+					}
+	       			return responseObject;
+	    		},
+	    		error: function(response, ioArgs){
+	    			cursorBusy(false);
+	      			loadedAlert(errorMessage("domains", ioArgs.xhr.status, "Error when loading domain list:\n\n"+ioArgs.xhr.statusText));
+	      			return response;
+	    		},
+	    		sync: synchronous,
+	    		handleAs: "json"
+	  		});
+		}
+
+		function getUsers(url){
+			cursorBusy(true);
+		  	dojo.xhrPost({
+	    		url: url+"&uihandle="+listingStore.uiHandle,
+	    		load: function(responseObject, ioArgs){
+		  				cursorBusy(false);
+						usersStore = new dojo.data.ItemFileWriteStore({data: responseObject});
+					//	formUsername.store = usersStore;
+	    			},
+	    		error: function(response, ioArgs){
+	    				cursorBusy(false);
+	      				loadedAlert(errorMessage("userlist", ioArgs.xhr.status, "Error when loading user list:\n\n"+ioArgs.xhr.statusText));
+	      				return response;
+	    			},
+	    		sync: synchronous,
+	    		handleAs: "json"
+	  		});
+		}
+
+		function getPermission(url, data){
+			if (typeof data === "undefined")
+				data = "";
+			cursorBusy(true);
+		  	dojo.rawXhrPost({
+	    		url: url+"&uihandle="+listingStore.uiHandle,
+	 		    headers: {
+			        "content-length": data.length,
+			        "content-type": "text/x-json"
+			    },
+	 		    postData: data,
+	    		load: function(response, ioArgs){
+						cursorBusy(false);
+	       				populatePermission(response);	      			
+	       				return response;
+	    			},
+	    		error: function(response, ioArgs){
+	    				cursorBusy(false);
+	      				loadedAlert(errorMessage("permission", ioArgs.xhr.status, "Error getting or setting permissions:\n\n"+ioArgs.xhr.statusText));
+	      				return response;
+	    			},
+	    		sync: synchronous,
+	    		handleAs: "json"
+	  		});		
+		}
+
+		function populatePermission(permissions){
+			permissionsStore = new dojo.data.ItemFileWriteStore({data: permissions});
+			permissionsGrid.setStore(permissionsStore);
+			dojo.html.set(dojo.byId("permissionsOwner"), "<small><br>(Owner is: "+permissions.owner+")</small>");
+			if (permissions.sticky != null){
+				if (permissions.sticky == "true")
+					dojo.html.set(dojo.byId("stickyControl"), "This directory is sticky <button type=\"button\" id=\"stickyPermissionsButton\" onclick=\"setSticky(false, dojo.byId('recursive').checked)\">Unset</button>");
+				else
+					dojo.html.set(dojo.byId("stickyControl"), "This directory is not sticky <button type=\"button\" id=\"stickyPermissionsButton\" onclick=\"setSticky(true, dojo.byId('recursive').checked)\">Set</button>");
+			} else
+				dojo.html.set(dojo.byId("stickyControl"), "");
+			listingStore.refreshDisplay(false);
+		}
+
+		function getPermissions(batch){
+			var sourceURL = listingStore.getCurrentDirectory();
+			if (!batch)
+				sourceURL = listingStore.getCurrentDirectory()+"/"+/*escape(*/getFirstSelectedItem()/*)*/; 
+			enableButton('recursive', (directoryIsSelected() || unknownIsSelected()));	// Enable if any dirs in list
+	        if ("<parameter servertype/>" == 'srb') 
+				getDomains(sourceURL+"?method=domains");
+	        else
+				getUsers(sourceURL+"?method=userlist");
+			resetPermissionsStore(true);
+	        if (!batch) //{
+				getPermission(sourceURL+"?method=permission");
+//	        } else 
+//				resetPermissionsStore(true);
+			dialogPermissions.show();
+		}
+
+		function validateFormUsername() {
+			var usernameValue = dojo.byId("formUsername").value;
+			if (usernameValue == "")
+				return false;
+/*			var users = usersStore._getItemsArray();
+			for (var i = 0; i < users.length; i++)
+				if (users[i].name[0] == usernameValue)
+					return true;
+			return false;*/
+			return true;
+		}
+		
+		function savePermission(){
+			if (selectedItemsCount() == 0)
+				return;
+			var recursiveValue = "";
+			var usernameValue = dojo.byId("formUsername").value;
+			var domainValue;
+			var permValue = dojo.byId("formPerm").options[dojo.byId("formPerm").selectedIndex].value;
+	        if ("<parameter servertype/>" == 'srb') {
+				domainValue = dojo.byId("formDomain").value;
+				if (!dijit.byId("formDomain").isValid() || domainValue == ""){
+					loadedAlert("Please enter a valid domain.");
+					return;
+				}
+	        }
+			//if (/*!formUsername.isValid() || */usernameValue == ""){
+			if (!validateFormUsername()) {
+				loadedAlert("Please enter a valid username.");
+				return;
+			}
+			if (dojo.byId("recursive").disabled == false)
+				recursiveValue = "&recursive="+(dojo.byId("recursive").checked);			
+	        var form_url = ("<parameter servertype/>" == 'srb') ?
+	        	listingStore.getCurrentDirectory()+"?method=permission"+"&username="+usernameValue+"&domain="+domainValue+"&permission="+permValue+recursiveValue
+				:
+				listingStore.getCurrentDirectory()+"?method=permission"+"&username="+usernameValue+"&permission="+permValue+recursiveValue;
+			getPermission(form_url, listToJSON());
+		}
+
+		function setSticky(state, recursive){
+			var form_url = listingStore.getCurrentDirectory()+"?method=permission"+"&recursive="+recursive+"&sticky="+(state?"true":"false");
+			getPermission(form_url, listToJSON());
+		}
+
+		function getSelectedPermission(e){
+			formUsername.attr('displayedValue', ''+permissionsGrid.getItem(e.rowIndex).username);
+	        if ("<parameter servertype/>" == 'srb') 
+	        	dojo.byId("formDomain").value = permissionsGrid.getItem(e.rowIndex).domain;
+			for (var i = 0; i < dojo.byId("formPerm").options.length; i++){
+				if (dojo.byId("formPerm").options[i].title == permissionsGrid.getItem(e.rowIndex).permission) 
+					dojo.byId("formPerm").options[i].selected = true;
+				else
+					dojo.byId("formPerm").options[i].selected = false;
+			}
+		}
+
+		function showPermissions() {
+//			var selectedCount = selectedItemsCount();
+//			if (selectedCount == 0)
+//				return;
+			refreshButtons();
+			getPermissions(selectedItemsCount() > 1);				
+		}
+
+		function getReplicas(action, refresh){
+			cursorBusy(true);	
+		  	dojo.xhrPost({
+	    		url: listingStore.getCurrentDirectory()+"/"+getFirstSelectedItem()+"?method=replicas"+action+"&uihandle="+listingStore.uiHandle,
+	    		load: function(responseObject, ioArgs){    
+						replicasStore = new dojo.data.ItemFileWriteStore({data: responseObject});
+						replicasGrid.setStore(replicasStore);  
+						loadResourcesFromServer();
+						replicasGrid.selection.deselectAll();
+						if (refresh)
+							refreshReplicasButtons();
+	 					cursorBusy(false);
+	       				return responseObject;
+	    			},
+	    		error: function(response, ioArgs){
+	      				loadedAlert(errorMessage("replicas", ioArgs.xhr.status, "Error while fetching replicas:\n\n"+ioArgs.xhr.statusText));
+						replicasGrid.selection.deselectAll();
+						if (refresh)
+							refreshReplicasButtons();
+	       				cursorBusy(false);
+	      				return response;
+	    			},
+	    		sync: synchronous,
+	    		handleAs: "json"
+	  		});
+		}
+		
+		function loadResourcesFromServer(){
+			cursorBusy(true);	
+			dojo.html.set(dojo.byId('replicasStatusField'), 'Fetching list of resources from server...');
+		  	dojo.xhrPost({
+	    		url: listingStore.getCurrentDirectory()+"/"+getFirstSelectedItem()+"?method=resources&uihandle="+listingStore.uiHandle,
+	    		load: function(responseObject, ioArgs){    
+						var resources = responseObject.items;
+						replicasStore.fetch({
+							onComplete: 
+								function(items, request){
+									for (var i = 0; i < resources.length; i++) {
+										var resourceName = resources[i].name;
+										var found = false;
+										for (var j = 0; j < items.length; j++) {	
+											var replicaName = replicasStore.getValue(items[j], "resource");
+											if (replicaName == resourceName) {
+												found = true;
+												break;
+											}
+										}
+										if (!found) {
+											var newItem = {resource: resourceName, number: null};
+											replicasStore.newItem(newItem);
+										}
+									}
+								}
+						});
+						cursorBusy(false);
+						dojo.html.set(dojo.byId('replicasStatusField'), '');
+	       				return responseObject;
+	    			},
+	    		error: function(response, ioArgs){
+	      				loadedAlert("Error while fetching resources: "+errorMessage("resources", ioArgs.xhr.status, ioArgs.xhr.statusText));
+	      				cursorBusy(false);
+	      				dojo.html.set(dojo.byId('replicasStatusField'), '');
+	      				return response;
+	    			},
+	    		sync: synchronous,
+	    		handleAs: "json"
+	  		});
+		}
+		
+		function deleteReplica() {
+			var resource = replicasStore.getValue(replicasGrid.selection.getFirstSelected(), "resource");
+			getReplicas("&delete="+resource, true);
+		}
+		
+		function replicate() {
+			var resource = replicasStore.getValue(replicasGrid.selection.getFirstSelected(), "resource");
+			getReplicas("&replicate="+resource);
+		}		
+
+		function showReplicas() {
+//			var selectedCount = selectedItemsCount();
+//			if (selectedCount != 1)
+//				return;
+			resetReplicasStore();
+			dojo.html.set(dojo.byId('replicasStatusField'), 'Loading...');
+			dialogReplicas.show();
+			getReplicas("");
+		}
+
+		function showShare() {
+			var shareButton = dojo.byId('shareRadioButton');
+			var unshareButton = dojo.byId('unshareRadioButton');
+			if (unknownIsSelected() || (sharedIsSelected(false) && !sharedIsSelected(true))) {
+				shareButton.checked = false;
+				unshareButton.checked = false;
+			} else
+			if (sharedIsSelected(true)) {
+				shareButton.checked = false;
+				unshareButton.checked = true;
+			} else
+			if (!sharedIsSelected(false)) {
+				shareButton.checked = true;
+				unshareButton.checked = false;
+			}				
+			dojo.byId("shareOKButton").disabled = true;
+			refreshButtons();
+			dialogShare.show();
+//			var action = sharedIsSelected() ? 'unshare' : 'share';
+//		    if (!confirm(warnBulk()+'Are you sure you want to '+action+' '+decodeURIComponent(getFirstSelectedItem())+"?"))
+//			    return;
+//			shareFiles(listingStore.getCurrentDirectory(), action);
+		}
+
+		function showShares(show) {
+			if (show) {
+				resetSharesStore(true);
+				getShares();
+				dialogShares.show();
+			} else {
+				dialogShares.hide();
+			}
+		}
+
+		function getGridSelection(grid) {
+			var selected = grid.selection.getSelected();
+			if (selected != null) 
+				for (var i = 0; i < selected.length; i++) 
+					if (selected[i] == null) { // If any selection items are null, force grid to load all items from store
+						for (var row = 0; row < grid.rowCount; row += grid.rowsPerPage)
+							grid._fetch(row, false);
+						return sharesGrid.selection.getSelected();
+					}
+			return selected;
+		}
+
+		function generateSharesLinks() {
+			var selected = getGridSelection(sharesGrid);
+			if (selected != null) {
+	            var linksWindow = window.open('');
+	            if (!linksWindow) {
+		            alert("Can't open new window for generated links. Please ensure you have popus enabled for this site.");
+		            return;
+	            }
+	            if (window.focus)
+	                linksWindow.focus();
+                try {
+	            	linksWindow.document.write('<html><head><title>Selected Links</title></head>');
+	            	linksWindow.document.write('<body><h2 style="text-align: center;">Selected Links for <parameter account/></h2><br>');
+					for (var i = 0; i < selected.length; i++) 			
+		            	linksWindow.document.write('<a href="'+selected[i].url+'">'+selected[i].url+'</a><br>');
+		        	linksWindow.document.write('</body></html>');
+	            	linksWindow.document.close();
+                } catch (e) {} // Ignore write errors. If document is closed, too bad
+			}
+		}
+
+		function showUploadDialog(show) {
+			if (show) {
+				dialogUpload.show();
+				refreshButtons();
+			} else
+				dialogUpload.hide();
+		}
+
+		function showDialogMoveCopy(move) {
+			dialogMoveCopy.attr("mode", move);
+			refreshButtons();
+			dialogMoveCopy.show()
+		}
+
+		function resetConnection() {
+			var url = window.location.href;
+			url = url.replace(/#.*/, ""); 		// Trim anchor
+			url = url.replace(/[&?]reset/, "");	// Trim reset
+			if (url.indexOf("?") > -1)
+				url += "&reset";
+			else
+				url += "?reset";
+			window.location.replace(url);	
+		}
+
+		function reloadWindow() {
+			if (dojo.isIE) 
+				window.location.href = window.location.href;  // reload doesn't seem to work for IE but this does
+			//else
+				window.location.reload(true);
+		}
+		
+		function isSecure() {
+			return window.location.protocol == "https:";
+		}
+		
+		function login() {
+			var url;
+			if (isSecure()) {
+				url = window.location.href;
+				url = url.replace(/#.*/, ""); 		// Trim anchor
+				if (url.indexOf("?") > -1)
+					url += "&noanon";
+				else
+					url += "?noanon";
+			} else 
+				url = 'https://'+window.location.hostname+'<parameter shibinitpath/>?target='+window.location.href;
+			logout(); // Logout from anonymous user
+			window.location.replace(url);
+		}
+		 
+		function logout() {
+			cursorBusy(true);	
+		  	dojo.xhrPost({
+	    		url: "?method=logout&uihandle="+listingStore.uiHandle,
+	    		load: function(responseObject, ioArgs){    
+		//  alert("logout successful");
+	 					cursorBusy(false);
+	 					if (responseObject.redirect)
+		 					window.location.replace(responseObject.redirect);
+	       				return responseObject;
+	    			},
+	    		error: function(response, ioArgs){
+		    			checkOffline(response);
+		    			var i = ioArgs.xhr.statusText.indexOf("not currently logged");
+		    			if (listingStore.uiHandle && (i > -1))
+		      				loadedAlert("You have already been automatically logged out");
+		    			else
+	      					loadedAlert("logout failed:\n\n"+ioArgs.xhr.statusText);
+	       				cursorBusy(false);
+	       				reloadWindow();
+	      			//	return response;
+	    			},
+	    		sync: true,
+	    		handleAs: "json"
+	  		});
+		}
+
+		// This overrides listingGrid.getColumnTogglingItems() so that the checkbox for the metadata column can be omitted. 
+		function getColumnMenu() {
+			result = listingGrid.inherited("getColumnTogglingItems", arguments);
+			if (listingLayout[listingLayoutMetadataField].hidden == true)
+				result.splice(listingLayoutMetadataField, 1);
+			return result;
+		}
+
+		function doHelp() {
+			var helpURL = "<parameter helpurl/>";
+	        if (helpURL.match('^(https?):\/\/')) {
+				window.open(helpURL);
+	        } else {
+	        	dojo.html.set(dojo.byId('helpMessage'), helpURL);
+				dialogHelp.show();
+	        }	
+		}
+
+//		function styleGrid(inRow) {
+//			inRow.customStyles += ' font-family:"Courier New";';
+//			dojox.grid.DataGrid.prototype.onStyleRow.apply(this, arguments);
+//		}
+		
+		function doDebug() {
+			cursorBusy(true);	
+		  	dojo.xhrPost({
+	    		url: "?method=debug&uihandle="+listingStore.uiHandle,
+	    		load: function(responseObject, ioArgs){    
+//						alert("debug successful");
+	 					cursorBusy(false);
+	       				return responseObject;
+	    			},
+	    		error: function(response, ioArgs){
+	      				alert("debug failed:\n\n"+ioArgs.xhr.statusText);
+	       				cursorBusy(false);
+	      				return response;
+	    			},
+	    		sync: /*true*/false,
+	    		handleAs: "json"
+	  		});
+		}
+
+		var enableDebugButton = false;
+		function debugButtonHandler() {
+		//	listingStore.gotoDirectory(listingStore.getCurrentDirectory()+"blah");
+			//doDebug();
+		}
+		
+		dojo.declare("ListingStore", dojox.data.QueryReadStore, {
+			directory:"",
+			lastURL:null,
+			uiHandle:null,
+			grid:null,
+			invalid:true,
+			addToHistory:false,
+			readOnly: true,
+			currentDirectory:"",
+			urlFields:null,
+			setURL: function(dir, noCache, postfix) {
+				this.urlFields = {dir:dir, noCache:noCache, postfix:postfix};
+				this.buildURL();
+			},
+			urlChanged: function() {
+				if (!this.lastURL)
+					return true;
+				return (this.lastURL.dir != this.urlFields.dir) || (this.lastURL.noCache != this.urlFields.noCache) || (this.lastURL.postfix != this.urlFields.postfix);
+			},
+			setLastURL: function(urlFields) {
+				this.lastURL = {dir:urlFields.dir, noCache:urlFields.noCache, postfix:urlFields.postfix};
+			},
+			buildURL: function() {
+				this.url = baseURL+this.urlFields.dir+"?method=dojoquery&uihandle="+this.uiHandle+(this.urlFields.noCache?"&nocache":"")+(this.urlFields.postfix ? this.urlFields.postfix:"");
+			},
+			setCurrentDirectory: function(dir) {
+				this.currentDirectory = dir;
+			},
+			getCurrentDirectory: function() {
+				return this.currentDirectory;
+			},
+			gotoDirectory: function(dir, addToHistory) {
+				this.directory = dir;
+				this.addToHistory = addToHistory;
+			},
+			isValid: function() {
+				return !this.invalid;
+			},
+//			gotoParentDirectory: function() {
+//				var parent = decodeURIComponent(this.getCurrentDirectory());
+//				var i = parent.lastIndexOf("/");
+//				if (i > 0)
+//					parent = parent.substring(0, i);
+//				this.gotoDirectory(parent, true);
+//			},
+			onFetchError: function() {
+			},
+			onFetchSuccess: function() {
+			},
+			_fetchItems:function(request, fetchHandler, errorHandler) {
+				// Assign custom handlers for store's ajax call to Davis server. newFetchHandler is invoked by _xhrFetchHandler
+				// (which is supplied to the ajax call by super._fetchItems) for a successful call. newErrorHandler is invoked by the 
+				// ajax call for a failure http code.					
+				var oldErrorHandler = errorHandler;
+				var directory = this.directory;
+				var onFetchError = this.onFetchError;
+				var newErrorHandler = function(errorData, requestObject) {
+					if (pageLoaded) {
+						if (errorData.status == 502) { // Server connection lost
+							loadedAlert("The server has dropped your connection. It will now be reset.");
+							resetConnection();
+						} else 
+						if (errorData.status == 410) { // Server restarted
+				//			loadedAlert(errorMessage("get", errorData.status, "Your client appears to be out of sync with the server (server may have been restarted)"));
+							/*loadedAlert(*/errorMessage("get", errorData.status, "Access denied - you are not currently logged in")/*)*/;
+				//			reloadWindow();
+						} else {
+							var s = "Can't read "+directory+"\n\n"+errorMessage("get", errorData.status, "")+"\n\n";
+							if (errorData.status != 0 && errorData.status != 503)
+								if (confirm(s+"Would you like debugging details?"))
+									loadedAlert(s+(errorData.status?"Server responded with:\n\n":"")+(errorData.lineNumber?"At line "+errorData.lineNumber+": ":"")+errorData.message);
+						}
+					}
+					//this.grid._pending_requests[request.start] = false; // Indicate this fetch is complete - only needed for dojo < 1.4.1
+					if (onFetchError)
+						onFetchError();
+					cursorBusy(false);
+					if (oldErrorHandler) 
+						return oldErrorHandler(errorData, requestObject);
+				}
+				arguments[2] = newErrorHandler;
+				var oldFetchHandler = fetchHandler;
+				var newFetchHandler = function(items, requestObject, numRows) {
+					cursorBusy(false);
+					if (oldFetchHandler) 
+						return oldFetchHandler(items, requestObject, numRows);
+				}
+				arguments[1] = newFetchHandler;
+				cursorBusy(true);
+				return this.inherited("_fetchItems", arguments);
+			},
+			_xhrFetchHandler:function(data, request, fetchHandler, errorHandler) {
+				// This is only called by a successful ajax call
+//				alert("_xhrFetchHandler: data="+ data);
+				this.uiHandle = data.uiHandle;
+				this.buildURL();
+				this.url = this.url.replace("&nocache", ""); // Force reading from servlet cache until instructed otherwise
+				
+				// If invalid is true, mark all internal grid items as empty to force refetching. Also invalidate invalid
+				// nodes - otherwise scrolling may display stuff cached from previous directories.
+				if (this.invalid) {
+					this.invalid = false;
+					this.grid.items = null; // Force store load
+					this.grid._by_idx = [];
+					this.grid._by_idty = {};
+					this.grid._bop = -1;
+					this.grid._eop = -1;
+					this.grid._pages = [];
+					this.grid.scroller.invalidateNodes();
+					this.grid.selection.deselectAll();
+				}
+				this.setCurrentDirectory(this.directory);
+				this.readOnly = (data.readOnly == "true");
+				if (this.addToHistory)
+					addToHistory(this.directory);
+				// Next line prevents a null node problem for Firefox in store._xhrFetchHandler - second last line
+				// Not necessary? Also - causes problem in Chrome!
+				//this.grid.focus.focusHeader(); 
+				var result = this.inherited("_xhrFetchHandler", arguments);
+				try {
+					if (dojo.isIE)
+						listingGrid.focus.focusHeader();  	// For IE: when changing to a new dir that needs scrollbar, this stops
+															// scrollbar knob jumping back to top during scroll.
+				} catch (e) {} // Ignore errors if table is not fully rendered
+				if (this.onFetchSuccess)
+					this.onFetchSuccess();
+				return result;
+			}
+		});
+	</script>
+<parameter includehead/>
+</head>
+
+<body class="tundra">
+<parameter includebodyheader/>
+<script>dojo.back.init();</script>
+
+
+<!--<script src="http://www.java.com/js/deployJava.js"></script>
+<script> 
+    var attributes = { code:'HelloWorld.class', archive:'/applets.jar',  width:150, height:30} ; 
+    var parameters = {} ; 
+    deployJava.runApplet(attributes, parameters, '1.4'); 
+</script>-->
+
+
+<!-- -------------- Dialogs -------------- -->
+<div dojoType="dijit.Dialog" id="dialogCreateDir" jsId="dialogCreateDir" title="Create Directory">
+	New directory name:
+	<input name="directory" id="directoryInputBox" jsId="directoryInputBox" dojoType="dijit.form.TextBox" trim="true" value=""/>
+	<br/><br/>
+	<div style="text-align: right;">
+		<button type="button" id="createDirCreateButton" onclick="createDirectory()">Create</button> 
+		<button type="button" onclick="dialogCreateDir.hide()">Cancel</button>
+	</div>
+</div>		
+<div dojoType="dijit.Dialog" id="dialogUpload" jsId="dialogUpload" title="Upload" onCancel="enableButton('uploadCancelButton', false); uploadCancel();">
+ 	<form dojoType="dijit.form.Form" id="uploadForm" enctype="multipart/form-data" method="post" onSubmit="return /*validateUploadForm()*/ false;">
+   		File to upload:
+   		<input id="uploadTextField" type="file" name="uploadFileName" onChange="refreshButtons()" onKeyPress="if (isEnterKey(event)) {enableButton('uploadStartButton', false); if (validateUploadForm()) uploadFile();}"/>
+ 	</form>
+ 	<br/>
+	<div id="uploadStatusField"></div>
+	<br/><small>Please note that most browsers can't upload files greater than 2GB,<br>and some can't upload zero-byte files.</small><br/><br/>
+	<div style="text-align: right;">
+		<button type="button" id="uploadStartButton" onclick="enableButton('uploadStartButton', false); if (validateUploadForm()) uploadFile();">Upload</button> 
+		<button type="button" id="uploadCancelButton" onclick="enableButton('uploadCancelButton', false); uploadCancel();">Cancel</button>
+	</div>
+</div>					
+<div dojoType="dijit.Dialog" jsId="dialogRename" title="Rename">
+    New name:
+	<input name="newname" id="renameInputBox" dojoType="dijit.form.TextBox" trim="true" value=""/>
+	<br/><br/>
+	<div style="text-align: right;">
+		<button type="button" onclick="rename(dojo.byId('renameInputBox').value)">Rename</button>
+		<button type="button" onclick="dialogRename.hide()">Cancel</button>
+	</div>
+</div>					
+<div dojoType="dijit.Dialog" jsId="dialogMoveCopy" title="Move/Copy Items">
+	<table>
+		<tr>
+			<td><span class="text" id="moveCopyAction"></span> selected items to:&nbsp;
+				<span class="text" id="destinationBreadcrumb" jsId="destinationBreadcrumb"></span>
+				<br><br>
+				<div style="width: 600px; height: 350px; border: inset;" id="destinationGrid" jsId="destinationGrid" dojoType="dojox.grid.DataGrid" structure="destinationLayout" store="destinationStore" selectionMode="none" rowsPerPage="50"></div>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<div style="text-align: right;">
+					<button type="button" id="destinationMoveCopyButton" jsId="destinationMoveCopyButton" onclick="moveCopy(destinationStore.getCurrentDirectory(), dialogMoveCopy.attr('mode'))">Move/Copy</button>
+					<button type="button" onclick="dialogMoveCopy.hide()">Cancel</button>
+				</div>
+			</td>
+		</tr>
+	</table>
+</div>					
+<div dojoType="dijit.Dialog" jsId="dynamicDialog" style="width: 600px;">
+</div>					
+<div dojoType="dijit.Dialog" jsId="dialogMetadata" title="Metadata">
+	<table>
+		<tr>
+			<td>
+	        	<button type="button" id="refreshMetadataButton" onclick="refreshMetadata(dialogMetadata.attr('url'))">Refresh</button>
+	    		<button type="button" id="addMetadataButton" onclick="addMetadata()" >Add Metadata</button>
+	    		<button type="button" onclick="metadataGrid.removeSelectedRows()">Remove Metadata</button>
+	    		<button type="button" id="saveMetadataButton" onclick="saveMetadata()">Save</button>
+	    		<button type="button" onclick="dialogMetadata.hide()">Close</button>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<!-- <div id="metadataGrid" jsId="metadataGrid" dojoType="dojox.grid.DataGrid" structure="metadataLayout" autoHeight="10" style="width: 100%;" onStyleRow="styleGrid"></div>-->
+				<div id="metadataGrid" jsId="metadataGrid" dojoType="dojox.grid.DataGrid" structure="metadataLayout" autoHeight="10" style="width: 100%;"></div>
+			</td>
+		</tr>
+	</table>
+</div>
+<div dojoType="dijit.Dialog" jsId="dialogPermissions" title="Permissions">
+	<table>
+		<tr>
+			<td valign="top">
+				<div style="width: 350px;" autoHeight="7" structure="permissionsLayout" dojoType="dojox.grid.DataGrid" id="permissionsGrid" jsId="permissionsGrid" selectionMode="single" onRowClick="getSelectedPermission"></div>
+			</td>
+			<td valign="top">
+				<table >
+					<tr>
+						<td colspan="2"><span id="stickyControl"></span><div id="domainRow"></div></td>					
+					</tr>
+					<tr>
+						<td>Username</td>
+		<!-- 			<td><input name="username" id="formUsername" jsId="formUsername" dojoType="dijit.form.FilteringSelect" autocomplete="true" searchAttr="name" store="usersStore"/></td>-->
+						<td><input name="username" id="formUsername" jsId="formUsername" dojoType="dijit.form.TextBox" trim="true" value=""/></td>
+					</tr>
+        			<tr>
+        				<td>Permission</td>
+        				<td>
+        					<select id="formPerm" name="permission"></select>
+            			</td>
+            		</tr>
+					<tr>
+						<td>Recursive</td>
+						<td><input type="checkbox" name="recursive" id="recursive" dojoType="dijit.form.CheckBox"/></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		<tr>
+			<td id="permissionsOwner" align="left" valign="top"></td>
+		</tr>
+		<tr>
+			<td colspan="2" align="right" valign="bottom">
+				<button type="button" id="applyPermissionsButton" onclick="savePermission()">Apply</button>
+				<button type="button" onclick="dijit.byId('recursive').setAttribute('checked', false); dialogPermissions.hide()">Close</button>
+			</td>
+		</tr>
+	</table>
+</div>
+<div dojoType="dijit.Dialog" jsId="dialogReplicas" title="Replicas" onCancel="/*setCursor(false, true)*/">
+	<table>
+		<tr>
+			<td width="400px">
+				<div autoHeight="10" structure="replicasLayout" dojoType="dojox.grid.DataGrid" id="replicasGrid" jsId="replicasGrid" selectionMode="single" loadingMessage="loading" autoHeight="true" onClick="listingStore.refreshDisplay(false)"></div>
+			</td>
+			<td valign="top">
+				<button type="button" id="replicasDeleteButton" style="width:100%" onclick="deleteReplica()">Delete</button><br/>
+				<button type="button" id="replicasReplicateButton" style="width:100%" onclick="replicate()">Replicate</button><br/>
+				<button type="button" style="width:100%" onclick="dialogReplicas.hide()">Close</button><br/>	
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<div id="replicasStatusField" style="font-size:small"></div>
+				<small><br>Note: Replicas can't be deleted if 2 or less remain</small>
+			</td>
+		</tr>
+	</table>
+</div>
+<div style="width:300px;" dojoType="dijit.Dialog" jsId="dialogShare" title="Sharing" onCancel="/*setCursor(false, true)*/">
+	<div style="text-align: left;">
+	    Please select an action:<br><br>
+		<input type="radio" name="sharingRadioButtons" id="shareRadioButton" value="share" onClick="refreshButtons()">
+		<label for="g1rb1">Share items</label>
+		<br>
+		<input type="radio" name="sharingRadioButtons" id="unshareRadioButton" value="unshare" onClick="refreshButtons()">
+		<label for="g1rb2">Unshare items</label>
+		<br><br><br>
+	</div>
+	<div style="text-align: right;">
+		<button type="button" id="shareOKButton" onclick="dialogShare.hide(); shareFiles(listingStore.getCurrentDirectory(), dojo.byId('shareRadioButton').checked);">OK</button>
+		<button type="button" onclick="dialogShare.hide()">Cancel</button>
+	</div>
+</div>
+<div style="width:90%;" dojoType="dijit.Dialog" jsId="dialogShares" title="Shares" onCancel="/*setCursor(false, true)*/">
+	<small>Shared files owned by <parameter account/>:<br><br></small>
+	<div autoHeight="10" structure="sharesLayout" dojoType="dojox.grid.DataGrid" id="sharesGrid" jsId="sharesGrid" loadingMessage="loading" rowsPerPage="100"
+	     autoHeight="true" columnReordering="true" onSelectionChanged="refreshButtons()"></div>
+	<br>
+	<div style="text-align: right;">
+		<button type="button" onclick="cursorBusy(true); sharesGrid.selection.selectRange(0, sharesGrid.rowCount-1); cursorBusy(false);">Select all</button>
+		<button type="button" id="generateLinksButton" onclick="generateSharesLinks()">Generate links</button>
+		<button type="button" id="unshareButton" onclick="if (!confirm(warnBulk()+'Are you sure you want to unshare the selected items?')) return; unshareAll()">Unshare</button>
+		<button type="button" onclick="dialogShares.hide()">Close</button>
+	</div>
+</div>
+<div dojoType="dijit.Dialog" jsId="dialogAbout" title="About" onCancel="setCursor(false, true)">
+	<table>
+		<tr>
+			<td align="center">Davis version: <parameter appversion/><br><br><small>
+			    Using Dojo version: <script>document.write(dojo.version)</script><br>
+			    Server type: <parameter servertype/>&nbsp;&nbsp;&nbsp;&nbsp;Authentication scheme: <parameter authscheme/>&nbsp;&nbsp;&nbsp;&nbsp;Jargon version string: <parameter jargonversion/><br><br>
+			    Davis UI last loaded <parameter uiloaddate/>&nbsp;&nbsp;&nbsp;&nbsp;UI handle: <span id="aboutUIHandle"></span><br>
+			    Browser: <script>document.write(navigator.userAgent)</script><br><br>
+			    Support contact: <parameter organisationsupport/></br></small>
+			</td>
+		</tr>
+		<tr>
+			<td align="right">
+				<button type="button" onclick="dialogAbout.hide()">Close</button><br/>	
+			</td>
+		</tr>
+	</table>
+</div>
+<div dojoType="dijit.Dialog" jsId="dialogHelp" title="Help">
+	<div id="helpMessage"></div>
+	<br/><br/>
+	<div style="text-align: right;">
+		<button type="button" onclick="dialogHelp.hide()">Close</button>
+	</div>
+</div>					
+<div dojoType="dijit.Menu" jsId="gridMenu" id="gridMenu" style="display: none;">
+	<div jsId="columnMenu" dojoType="dojox.widget.PlaceholderMenuItem" label="GridColumns"></div>
+</div>
+
+
+
+<!-- ---------Main body------------ -->			
+<!--<div style="width: 400px; height: 500px; border: 1px solid blue;" id="destinationGrid" jsId="destinationGrid" dojoType="dojox.grid.DataGrid" structure="destinationLayout" store="destinationStore" rowsPerPage="50"></div>-->
+<div jsId="borderContainer" dojoType="dijit.layout.BorderContainer" style="width: 100%; height: 100%; border: 0px; padding-top: 0px; padding-bottom: 0px;">
+	<div jsId="topContainer" id="topContainer" dojoType="dijit.layout.ContentPane" region="top" style="border: 0px;">
+		<span id="header">
+			<table width="100%" border="0px" cellspacing="0" cellpadding="0">
+				<tr>
+		    		<td valign="bottom">
+						<h1 class="text"> <img src="<parameter organisationlogo/>" alt="" width="<parameter organisationlogowidth/>" height="<parameter organisationlogoheight/>" />&nbsp;<parameter authenticationrealm/></h1>
+					</td>
+					<td align="right" valign="top">
+						<table border="0" cellspacing="0" cellpadding="0">
+							<tr><td>
+								<table border="0" cellspacing="0" cellpadding="0">
+									<tr class="text">
+			        					<td colspan="100" align="right" style="padding-bottom:4px;">You are logged in as &lt;<a title="Go to your home folder" class="link" onclick="if (!isAnonymous()) {listingStore.gotoDirectory('<parameter home/>', true);} return false" href="<parameter home/>"><parameter account/></a>&gt;<!-- | <a class="link" href="">logout</a>--></td>
+			        				</tr>
+			        				<tr>
+			        					<td id="sessionButtonsHTML" style="width:auto;" align="right" valign="top"></td>
+			        					<td align="right" style="width:100%;" valign="top">
+			        						<a title="Refresh this page" onclick="refreshCurrentDirectory(); listingStore.refreshDisplay(true); return false" href="Refresh this page"><img border="0" alt="refresh" src="/images/ic_refresh.gif" width="32" height="32"/></a>
+											<span id="homeButton"><a title="Go to your home folder" onclick="listingStore.gotoDirectory('<parameter home/>', true); return false" href="<parameter home/>"><img border="0" alt="Go to your home folder" src="/images/ic_home.gif" width="28" height="32"/></a></span>
+											<span id="trashButton"><a title="Go to your trash folder" onclick="listingStore.gotoDirectory('<parameter trash/>', true); return false" href="<parameter trash/>"><img border="0" alt="Go to your trash folder" src="/images/ic_trash.gif" width="28" height="32"/></a></span>
+											<span id="loginButton"><a title="Login with authentication" onclick="login(); return false" href="login"><img border="0" alt="Login with authentication" src="/images/login.png" width="26" height="32"/></a></span>
+											<span id="logoutButton"><a title="Logout of this session" onclick="logout(); return false" href="logout"><img border="0" alt="Logout of this session" src="/images/ic_logout.gif" width="26" height="32"/></a></span>
+											<span id="sharesButton"><a title="Show your shared files" onclick="showShares(true); return false" href="shares"><img border="0" alt="Show your shared files" src="/images/unshare.png" width="32" height="32"/></a></span>	        					
+			        					</td>
+			        					<td align="left" valign="top" style="width:1px; padding-left:2px;" >
+ 		 	        						<button dojoType="dijit.form.DropDownButton" showLabel="false" type="button" title="Help" baseClass="iconButton" iconClass="questionIcon">
+<!-- needed for dojo 1.4.2-->					<div dojoType="dijit.Menu" style="display: none;"><!-- -->
+<!-- needed for dojo 1.5.0						<div dojoType="dijit.Menu" > -->
+													<div dojoType="dijit.MenuItem" onClick="doHelp()">Help</div>
+													<div dojoType="dijit.MenuItem" onClick="dialogAbout.show()">About</div>
+												</div>
+											</button>        				
+			        					</td>
+				        		</table>
+				        		<!-- <table id="mode_buttons" border="0" cellspacing="4" cellpadding="0">
+			    	    			<tr class="text">
+			        	  				<td>Choose mode&nbsp;</td>
+			          					<td bgcolor="#CCCCCC">
+			          						<table class="hoverBorder" border="0" cellspacing="0" cellpadding="4">
+			          							<tr>
+			              							<td> Basic</td>
+			              						</tr>
+				              				</table>
+				              			</td>
+			    	          			<td bgcolor="#EEEEEE">
+			        	      				<table class="hoverBorder" border="0" cellspacing="0" cellpadding="4">
+			            	  					<tr>
+			              							<td> Advanced</td>
+			              						</tr>
+			              					</table>
+				              			</td>
+				              		</tr>
+			    	         	</table> -->
+			        	    </td></tr>
+			            </table>
+		            </td>
+		        </tr>
+		    </table>
+		    <table id="hor_rule" width="100%" border="0" cellpadding="0" cellspacing="0" style="padding-top:10px; padding-bottom:20px;">
+				<tr>
+		    		<td>
+						<table width="100%" border="0" cellpadding="0" cellspacing="0">
+		      				<tr>
+		      					<td bgcolor="#000000"><img src="/images/1px.png" alt="" width="1" height="1" /></td>
+		      				</tr>
+		      			</table>
+		      		</td>
+		      	</tr>
+		    </table>
+	    </span>
+	    <table width="80%" border="0" cellpadding="0" cellspacing="0" style="padding-top:0px; padding-bottom:5px;">
+			<tr>
+	    		<td valign="bottom">
+	    			<div class="text" style="padding-bottom:6px;"><small>You are browsing: </small>&nbsp;&nbsp;<span class="text" id="listingBreadcrumb"></span></div>
+	    			<small><small><div class="text" id="statusPanelHTML"></div></small></small>
+	    			<small><small><div class="text" id="displayMetadataHTML" style="padding-top:6px;"></div><br></small></small>
+	    			<div id="currentDirectoryButtonsHTML"></div>
+	    		</td>
+	    		<!-- <td align="right" valign="bottom">
+					<p>&nbsp;</p>
+					<p>&nbsp;</p>
+					<form id="form1" name="form1" method="post" action="">
+	        			<table border="0" cellspacing="2" cellpadding="4">
+	          				<tr>
+	          					<td>
+	          						<input name="search" type="text" id="search" size="30" />
+	          						<input type="submit" name="search_btn" id="search_btn" value="Search" />
+	          					</td>
+	          				</tr>
+	          			</table>
+	          		</form>
+	          	</td> -->
+	        </tr>
+	    </table>
+	</div>
+	<div dojoType="dijit.layout.ContentPane" region="center" style="border: 0px solid blue;">
+ 		<div id="listingGrid" jsId="listingGrid" dojoType="dojox.grid.DataGrid" structure="listingLayout" store="listingStore" 
+ 				rowsPerPage="50" columnReordering="true" headerMenu="gridMenu" getColumnTogglingItems='return getColumnMenu()'
+ 				errorMessage="No Items Loaded"></div> 
+	</div>
+	<div dojoType="dijit.layout.ContentPane" region="right" style="width: 15%; border: 0px solid yellow; overflow:hidden;">
+		<table width="100%" class="hoverBorderSide" border="0" cellspacing="0" cellpadding="4">
+	    	<tr>
+	      		<td class="activeItem" id="toggleAllButton" onclick="toggleAll()" title=""></td>
+	      	</tr>
+	    </table>
+	    <table width="100%" border="0" cellspacing="2" cellpadding="4">
+	    	<tr>
+	    		<td class="text">&nbsp;</td>
+	    	</tr>
+	    </table>
+	    <table width="100%" class="hoverBorderSide" border="0" cellspacing="0" cellpadding="4">
+	    	<tr>
+	    		<td class="activeItem" id="accessControlButton" onclick="if (!activeItemIsEnabled('accessControlButton')) return; showPermissions()">Access&nbsp;Control</td>       				
+	    	</tr>
+	    </table>
+	    <table width="100%" class="hoverBorderSide" border="0" cellspacing="0" cellpadding="4">
+	    	<tr>
+	    		<td class="activeItem" id="metadataButton" onclick="if (!activeItemIsEnabled('metadataButton')) return; showMetadata()">Metadata</td>
+	    	</tr>
+	    </table> 
+ 	    <span id="replicasButtonHolder">
+ 	 	    <table width="100%" class="hoverBorderSide" border="0" cellspacing="0" cellpadding="4">
+		    	<tr>
+		    		<td class="activeItem" id="replicasButton" onclick="if (!activeItemIsEnabled('replicasButton')) return; showReplicas()">Replicas</td>
+		    	</tr>
+		    </table>	
+	    </span>
+	    <table width="100%" class="hoverBorderSide" border="0" cellspacing="0" cellpadding="4">
+	    	<tr>
+	    		<td class="activeItem" id="renameButton" onclick="if (!activeItemIsEnabled('renameButton')) return; dojo.byId('renameInputBox').value=decodeURIComponent(getFirstSelectedItem()); dialogRename.show()">Rename</td>         				
+	    	</tr>
+	    </table>
+	    <table width="100%" class="hoverBorderSide" border="0" cellspacing="0" cellpadding="4">
+    		<tr>
+    			<td class="activeItem" id="copyButton" onclick="if (!activeItemIsEnabled('copyButton')) return; destinationStore.show(false); destinationStore.gotoDirectory(listingStore.getCurrentDirectory(), false); showDialogMoveCopy(false);">Copy</td>         				
+    		</tr>
+    	</table>
+	    <table width="100%" class="hoverBorderSide" border="0" cellspacing="0" cellpadding="4">
+    		<tr>
+    			<td class="activeItem" id="moveButton" onclick="if (!activeItemIsEnabled('moveButton')) return; destinationStore.show(false); destinationStore.gotoDirectory(listingStore.getCurrentDirectory(), false); showDialogMoveCopy(true);">Move</td>         				
+    		</tr>
+    	</table>
+	    <table width="100%" class="hoverBorderSide" border="0" cellspacing="0" cellpadding="4">
+	    	<tr>
+	    		<td class="activeItem" id="deleteButton" onclick="if (!activeItemIsEnabled('deleteButton')) return; deleteSelection()" >Delete</td>
+	    	</tr>
+	    </table>
+	    <span id="sharingButtonHolder">
+		    <table width="100%" class="hoverBorderSide" border="0" cellspacing="0" cellpadding="4">
+		    	<tr>
+		    		<td class="activeItem" id="sharingButton" onclick="if (!activeItemIsEnabled('sharingButton')) return; showShare()" >Share/Unshare</td>
+		    	</tr>
+		    </table>
+		</span>
+	    <div id=dynamicSelectionButtonsHTML></div>
+	    <table width="100%" class="invisible" id="trashRestoreTable" border="0" cellspacing="0" cellpadding="4">
+	    	<tr id="trashRestoreRow"></tr>
+	    </table>
+	</div>
+</div>
+<parameter includebodyfooter/>
+</body>
+</html>
