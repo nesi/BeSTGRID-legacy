@@ -1,0 +1,386 @@
+
+/** google.feeds.FeedControl classes
+ *  - very similar to .gsc-XXX from ajax search
+ */
+ 
+.gfc-resultsHeader {
+  width: 100%;
+  border-bottom: 1px solid #e9e9e9;
+  margin-bottom : 4px;
+  }
+  
+.gfc-resultsHeader .gfc-title{
+  color: #676767;
+  display: inline;
+  }
+
+.gfc-tabsArea {
+  margin-top: 6px;
+  }
+
+.gfc-tabsAreaInvisible {
+  display : none;
+  }
+
+.gfc-tabHeader {
+  display: inline;
+  cursor: pointer;
+  padding-left: 6px;
+  padding-right: 6px;
+  margin-right: 2px;
+  }
+
+.gfc-tabHeader.gfc-tabhActive {
+  border-left: 1px solid #e9e9e9;
+  border-right: 1px solid #e9e9e9;
+  border-top: 2px solid #ff9900;
+  color: black;
+  }
+
+.gfc-tabHeader.gfc-tabhInactive {
+  border-left: 1px solid #e9e9e9;
+  border-right: 1px solid #e9e9e9;
+  border-top: 2px solid #e9e9e9;
+  background: #e9e9e9;
+  color: #676767;
+  }
+
+.gfc-tabData.gfc-tabdActive {
+  display: block;
+  }
+
+.gfc-tabData.gfc-tabdInactive {
+  display: none;
+  }
+
+/* tab specific results header supression */
+.gfc-tabData .gfc-resultsHeader .gfc-title {
+  display: none;
+  }
+
+/* the results for each section
+ * .gfc-resultsbox-{visible,invisible} : a complete-collection of results including headers
+ * .gfc-results : the collection of results for a given feed
+ * .gfc-result : a generic result within the control
+ */
+.gfc-resultsbox-visible {
+  display : block;
+  }
+
+.gfc-resultsbox-invisible {
+  display : none;
+  }
+
+.gfc-results {
+  padding-bottom: .2em;
+  }
+
+.gfc-result {
+  margin-bottom: .5em;
+  }
+
+.gfc-result .gf-title {
+  height: 1.4em;
+  overflow: hidden;
+  }
+
+.gf-result .gf-author,
+.gf-result .gf-spacer,
+.gf-result .gf-relativePublishedDate {
+  color: #6f6f6f;
+  display : inline;
+  }
+
+.gf-result .gf-spacer {
+  margin-right : 3px;
+  margin-left : 3px;
+  }
+
+/**
+ * undo common generic table rules
+ * that tend to impact branding
+ */
+table.gf-branding td,
+table.gf-branding {
+  margin: 0 0 0 0;
+  padding: 0 0 0 0;
+  border : none;
+}
+
+table.gf-branding {
+  border-style : none;
+  border-width : 0px;
+  border-spacing : 0px 0px;
+  width : 100%;
+}
+
+td.gf-branding-text {
+  vertical-align : top;
+}
+
+td.gf-branding-text div.gf-branding-text {
+  padding-bottom : 2px;
+  text-align : right;
+  color : #676767;
+  font-size : 11px;
+  margin-right : 2px;
+}
+
+td.gf-branding-img-noclear {
+  width : 51px;
+  vertical-align : bottom;
+}
+
+td.gf-branding-img {
+  width : 65px;
+  vertical-align : bottom;
+}
+
+table.gf-branding-vertical td.gf-branding-text div.gf-branding-text {
+  margin-right : 0px;
+  text-align : center;
+}
+
+table.gf-branding-vertical td.gf-branding-img-noclear {
+  text-align : center;
+}
+
+div.gf-branding-img,
+div.gf-branding-img-noclear,
+img.gf-branding-img,
+img.gf-branding-img-noclear {
+  padding-top : 1px;
+}
+
+img.gf-branding-img,
+img.gf-branding-img-noclear {
+  margin : 0 0 0 0;
+  padding-right : 0;
+  padding-left : 0;
+  padding-bottom : 0;
+  border : none;
+  display : inline;
+}
+
+a.gf-branding-clickable {
+  cursor : pointer;
+}
+
+
+/* Lee-Yan's styles */
+
+#topContainer {
+	background:url(http://df.auckland.ac.nz/images/bg_body.gif) repeat-x top left; 
+	margin:0 -5px 0 -5px
+	}
+
+#hor_rule {display:none;}
+
+h1.text {
+	font-size:1px; 
+	color:#069; 
+	position:relative; 
+	margin:-45px 0 0 0;
+	}
+
+h1.text img {
+	width:400px; 
+	height:70px; 
+	margin:5px 0 0 8px;
+	}
+
+.dijitContentPane img,
+.dijitContentPane .iconButton { 
+	width:20px; 
+	height:20px;
+	margin:0 10px 0 0;
+	float:left
+	}
+
+.dijitContentPane td {
+	color:#fff;
+	font-size:.95em; 
+	padding:5px 0 0 0
+	}
+
+.dijitContentPane td a {color:#ff0}
+
+.text {color:#333;}
+
+td .text {padding:45px 0 0 0;}
+
+td small .text {padding:5px 0 0 10px; font-size:120%}
+
+td .text small {padding:0 0 0 8px; font-size:90%; margin-right:-10px;}
+
+#listingBreadcrumb a {
+	color:#069; 
+	font-size:.9em;
+	}
+
+#uploadButton td {
+	background:#fff url(http://df.auckland.ac.nz/images/btn_upload.gif) no-repeat top left; 
+	color:#069;
+	width:90px;
+	height:26px;
+	padding:2px 0 0 20px;
+	font-size:.9em;
+	}
+
+#createDirectoryButton td {
+	background:#fff url(http://df.auckland.ac.nz/images/btn_create-directory.gif) no-repeat top left; 
+	color:#069;
+	width:120px;
+	height:26px;
+	padding:2px 0 0 27px;
+	font-size:.9em;
+	}
+
+#emptyTrashButton td {
+	background:#fff url(http://df.auckland.ac.nz/images/btn_empty-trash.gif) no-repeat top left; 
+	color:#069;
+	width:110px;
+	height:26px;
+	padding:2px 0 0 22px;
+	font-size:.9em;
+	}
+
+table.inactiveItem {
+filter:alpha(opacity=50);
+        -moz-opacity:0.5;
+        -khtml-opacity: 0.5;
+        opacity: 0.5;}
+
+#dijit_form_DropDownButton_0 {margin:-2px -1px 0 -5px;}
+
+#createDirectoryButton img,
+#uploadButton img,
+#emptyTrashButton img {display:none;}
+
+.dojoxGridRowTable .link {color:#069;}
+
+#listingGrid {
+	background-image: url(http://df.auckland.ac.nz/images/bg_table.gif); 
+	background-repeat:repeat;
+	}
+
+.dojoxGridSortNode {
+	font-size:.75em; 
+	font-weight:normal;
+	}
+
+.dojoxGridRow a.darklink,
+.dojoxGridRowTable td {
+	color:#333; 
+	font-size:.95em;
+	}
+
+#dijit_layout_ContentPane_1 td{
+padding:0 0 0 30px; 
+height:24px;
+font-size:.75em;
+color:#999;
+filter:alpha(opacity=50);
+        -moz-opacity:0.5;
+        -khtml-opacity: 0.5;
+        opacity: 0.5;
+}
+
+#toggleAllButton {background:url(http://df.auckland.ac.nz/images/btn_select.gif) no-repeat top left;}
+#accessControlButton {background:url(http://df.auckland.ac.nz/images/btn_access-control.gif) no-repeat top left;}
+#metadataButton {background:url(http://df.auckland.ac.nz/images/btn_metadata.gif) no-repeat top left;}
+#replicasButton {background:url(http://df.auckland.ac.nz/images/btn_replicas.gif) no-repeat top left;}
+#renameButton {background:url(http://df.auckland.ac.nz/images/btn_rename.gif) no-repeat top left;}
+#copyButton {background:url(http://df.auckland.ac.nz/images/btn_copy.gif) no-repeat top left;}
+#moveButton {background:url(http://df.auckland.ac.nz/images/btn_move.gif) no-repeat top left;}
+#deleteButton {background:url(http://df.auckland.ac.nz/images/btn_delete.gif) no-repeat top left;}
+#sharingButton {background:url(http://df.auckland.ac.nz/images/btn_share.gif) no-repeat top left;}
+
+
+
+#dijit_layout_ContentPane_1 td.activeItem {
+/*color:#428db4;*/
+color:#069;
+filter:alpha(opacity=100);
+        -moz-opacity:1;
+        -khtml-opacity:1;
+        opacity:1;
+}
+
+#dijit_layout_ContentPane_1 td.activeItem:hover {color:#036; }
+
+#dijit_layout_ContentPane_1 td.text {
+	background-color:#fff;
+background:none;
+	height:20px;
+	}
+
+.dijitDialogPaneContent td {color:#333; font-family:Arial,Helvetica,sans-serif; font-size:90%; padding-right:8px;}
+
+.dijitDialogPaneContent a.link {color:#069;}
+
+.dijitDialogPaneContent th div {font-size:.9em;}
+
+.dijitDialogTitle {font-family:Arial,Helvetica,sans-serif;}
+
+body, html {
+	width:100%;
+	height:100%;
+	margin:0;
+	padding:0;
+	}
+
+                .text{font-family:Trebuchet MS, Helvetica, sans-serif;}
+                .text_small{font-family:Trebuchet MS, Helvetica, sans-serif; font-size:small;}
+                .text_small_small{font-family:Trebuchet MS, Helvetica, sans-serif; font-size:x-small;}
+                h1{margin:0px;}
+                button {background-color:lightGrey;}
+                input {background-color:white;}
+                #button_table{margin: 0px 0px 0px -4px;}
+                #mode_buttons{margin: -2px 2px 0px 0px;}
+                #header{margin: 0px 0px -12px 0px;}
+                #hor_rule{margin: 0px -12px -12px 0px;}
+                #table.HoverGreen {background:#509C52; color:#FFF;}
+                #table.HoverGrey {background:#CCC; color:#FFF; border:1px solid #CCC;}
+                .hoverBorderSide {margin:0px; line-height:120%; border-bottom: 1px solid #fff;}
+                .link{text-decoration:none; color:#04E;}
+                .darklink{text-decoration:none; color:black;}
+                .linkOver{text-decoration:underline;}
+                .link:hover{text-decoration:underline; color:#04E;}
+                .darklink:hover{text-decoration:underline; color:black;}
+                .activeItem{background:#AFCAAF; color:black; font-family:Arial, Helvetica, sans-serif; font-weight:bold;}
+                .activeItem:hover{background:#509C52; color:#FFF;}
+                .inactiveItem{background:#AFCAAF; color:#AFAFAF; font-family:Arial, Helvetica, sans-serif; font-weight:bold;}
+                .invisible{background:white; color:white; border: 0px;}
+                .linkImage{text-decoration:underline; color:#04E;}
+                .dojoxGrid-row-odd td {background:#e8f2ff;}
+        #metadataGrid {border: 1px solid #333; width: 400px; height: 300px;}
+                #permissionsGrid {border: 1px solid #333; width: 600px; height: 200px;}
+                #sharesGrid {border: 1px solid #333;}
+                #replicasGrid {border: 1px solid #333;}
+                #listingGrid .dojoxGridHeader .dojoxGridCell {background: #E8E8E8; font-size: 120%; text-align: center; /*border: 1px solid; border-color: white;*/ padding-bottom: 4px;}
+                #listingGrid .dojoxGridRow {/*background: white;*/}
+                #listingGrid .dojoxGridRowSelected {background: #C9D8E9;}
+                #listingGrid .dojoxGridCell {border: 0px; padding-right: 10px; text-align: right;}
+                #listingGrid {border-bottom:solid; border-width:1px; border-color:lightgrey;}
+                #listingGrid .dojoxGridMasterHeader {background:white;} /* These 2 are to make the left listingTable border disappear */
+#listingGrid .dojoxGridMasterView {background:white;}
+                .tundra .dojoxGridCellFocus {border: 0px !important;}           /* Hide focus border in grid */
+                #destinationGrid .dojoxGridHeader .dojoxGridCell {display:none;}
+                #destinationGrid .dojoxGridRow {background: white;}
+                #destinationGrid .dojoxGridRowSelected {background: #C9D8E9;}
+                #destinationGrid .dojoxGridCell {border: 0px; padding-right: 10px; text-align: right;}
+                .questionIcon {
+                background: url('/images/ic_help.gif') no-repeat top left; padding:0 0 0 0; margin:0 0 0 0;
+                width: 22px;
+                height: 22px;
+        }
+        .iconButton .dijitButtonNode {
+                        background: #069;
+                        color: white;
+                        padding: 0px;
+                        border: 0px solid black;
+        }
+        .dijitArrowButtonInner {display:none;}
+        .dijitMenuItem {font-size: small;}
+
