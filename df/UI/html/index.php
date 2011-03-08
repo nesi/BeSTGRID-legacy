@@ -66,8 +66,11 @@ h1 b {display:none;}
 <tbody><tr><th align="LEFT"><img id="logo" src="/images/lg_BeSTGRID-DataFabric.gif" alt="BeSTGRID logo"></th></tr></tbody>
 </table>
 <h1>BeSTGRID DataFabric</h1>
-<? if (! $do_redirect) : ?>
-<strong><p>You have been successfully redirected to your nearest DataFabric server: <?=$srv_name?></p></strong>
+<? if ($do_redirect) : ?>
+<p><em>You will be redirected to your nearest DataFabric entry point in <?=$redirect_timeout?> seconds...</em><br>
+<strong><a href="/cgi-bin/geoip.cgi">Click here to redirect immediately</a></strong></p>
+<? else: ?>
+<p><em>You have been successfully redirected to your nearest DataFabric server:</em> <strong><?=$srv_name?></strong></p>
 <? endif; ?>
 <ul>
 <li>Log in using your institution's Identity Provider: <a href="http://<?=$srv_name?>/BeSTGRID/home/">http://<?=$srv_name?>/BeSTGRID/home/</a>
@@ -75,12 +78,6 @@ h1 b {display:none;}
 </li></ul>
 <h2>User instructions</h2>
 <p>For more information on accessing this service, please see the <strong><a href="http://technical.bestgrid.org/index.php/Using_the_DataFabric">Using the DataFabric</a></strong> manual.</p>
-
-<?php if ($do_redirect): ?>
-<h2>Redirecting to your nearest DataFabric entry point</h2>
-<p>You will be redirected to your nearest DataFabric entry point in <?=$redirect_timeout?> seconds...</p>
-<p><strong><a href="/cgi-bin/geoip.cgi">Click here to redirect immediately</a></strong></p>
-<?php endif; ?>
 
 </body>
 </html>
