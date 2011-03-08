@@ -223,6 +223,7 @@ int main(int argc,char *argv[])
     unsigned long ip=0;
     int mindistindex=-1;
     ENTRIES hosts;
+    bool bPrintDistance=false;
 
 #ifdef CGI_MODE
     ip=resolve(getenv("REMOTE_ADDR"));
@@ -244,12 +245,14 @@ int main(int argc,char *argv[])
                  ip=resolve(argv[++i]);
              else if(!strcasecmp(argv[i]+2,"servers"))
                  load_hosts(argv[++i],hosts);
+             else if(!strcasecmp(argv[i]+2,"distance"))
+                 bPrintDistance=true;
         }
     }
     if(!ip || !hosts.size())
     {
-        fprintf(stderr,"Usage: %s --client xxx.xxx.xxx.xxx --servers df.bestgrid.org:df.auckland.ac.nz\n",argv[0]);
-        printf("0 0\n");
+        fprintf(stderr,"Usage: %s --client xxx.xxx.xxx.xxx --servers df.bestgrid.org:df.auckland.ac.nz [--distance]\n",argv[0]);
+        printf("%s0\n",(bPrintDistance?"0 ":""));
         return -1;
     }
 #endif
@@ -284,9 +287,13 @@ int main(int argc,char *argv[])
     printf("\n\n");
 #else
     if(mindistindex>=0)
-        printf("%.0lf %s\n",mindist,hosts[mindistindex].first.c_str());
+    {
+        if(bPrintDistance)
+            printf("%.0lf ",mindist);
+        printf("%s\n",hosts[mindistindex].first.c_str());
+    }
     else
-        printf("0 0\n");
+        printf("%s0\n",(bPrintDistance?"0 ":""));
 #endif
 
     return 0;
