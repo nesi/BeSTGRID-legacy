@@ -123,7 +123,7 @@ std::pair<double,double> GeoIP::coord(unsigned long ip)
 double GeoIP::distance(unsigned long ip)
 {
     if(!ip)
-        return 0.0;
+        return -1.0;
     std::pair<double,double> c=coord(ip);
     if(!m_bCoordSet)
     {
@@ -135,6 +135,8 @@ double GeoIP::distance(unsigned long ip)
 
 double GeoIP::distance(unsigned long ip1,unsigned long ip2)
 {
+    if(!ip1 || !ip2)
+        return -1.0;
     std::pair<double,double> c1=coord(ip1);
     std::pair<double,double> c2=coord(ip2);
     return distance(c1.first,c1.second,c2.first,c2.second);
@@ -152,6 +154,8 @@ double GeoIP::distance(double lat1,double lon1, double lat2,double lon2)
 
 
 typedef std::vector<std::pair<std::string,std::string> > ENTRIES;
+
+#ifdef CGI_MODE
 
 //read config file from /etc/geoip.conf
 void load_hosts(ENTRIES& e)
@@ -189,6 +193,26 @@ void load_hosts(ENTRIES& e)
     }    
     fclose(f);
 }
+#else
+void load_hosts(const std::string& hosts,ENTRIES& e)
+{
+    string str;
+
+    for(int i=0;i<hosts.size();++i)
+    {
+        if(hosts[i]==':')
+        {
+             if(str.size())
+                e.push_back(make_pair<string,string>(str,str));
+             str="";
+        }
+        else
+           str+=hosts[i];
+    }
+    if(str.size())
+        e.push_back(make_pair<string,string>(str,str));
+}
+#endif
 
 #define DEFAULT_HOST "df.bestgrid.org"
 
@@ -196,10 +220,12 @@ int main(int argc,char *argv[])
 {
     GeoIP gip;
     double mindist=10000000000.0;
-    unsigned long ip=resolve(getenv("REMOTE_ADDR"));
+    unsigned long ip=0;
     int mindistindex=-1;
     ENTRIES hosts;
 
+#ifdef CGI_MODE
+    ip=resolve(getenv("REMOTE_ADDR"));
     load_hosts(hosts);
     printf("Content-type: text/plain");
     if(!hosts.size())
@@ -209,6 +235,24 @@ int main(int argc,char *argv[])
         printf("Location-Reason: no-configuration\n");
         printf("\n\n");
     }
+#else
+    for(int i=1;i<argc;i++)
+    {
+        if(argv[i][0]=='-' && argv[i][1]=='-')
+        {
+             if(!strcasecmp(argv[i]+2,"client"))
+                 ip=resolve(argv[++i]);
+             else if(!strcasecmp(argv[i]+2,"servers"))
+                 load_hosts(argv[++i],hosts);
+        }
+    }
+    if(!ip || !hosts.size())
+    {
+        fprintf(stderr,"Usage: %s --client xxx.xxx.xxx.xxx --servers df.bestgrid.org:df.auckland.ac.nz\n",argv[0]);
+        printf("0 0\n");
+        return -1;
+    }
+#endif
     if(!hosts.size())
     {
         mindist=gip.distance(ip);
@@ -218,13 +262,14 @@ int main(int argc,char *argv[])
         for(int i=0;i<hosts.size();i++)
         {
             double dist=gip.distance(resolve(hosts[i].first.c_str()),ip);
-            if(dist<mindist)
+            if(dist>=0.0 && dist<mindist)
             {
                mindist=dist;
                mindistindex=i;
             }
         }
     }
+#ifdef CGI_MODE
     if(mindistindex>=0)
     {
         printf("Status-Code: 301\n");
@@ -237,6 +282,12 @@ int main(int argc,char *argv[])
 	printf("\n\nDistance from the server: %.2lf\n",mindist);
     }
     printf("\n\n");
+#else
+    if(mindistindex>=0)
+        printf("%.0lf %s\n",mindist,hosts[mindistindex].first.c_str());
+    else
+        printf("0 0\n");
+#endif
 
     return 0;
 }
