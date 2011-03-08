@@ -1,6 +1,6 @@
 CPP=g++
 CFLAGS=-I ./xml -O
-CFLAGS+=-DCGI_MODE
+#CFLAGS+=-DCGI_MODE
 LFLAGS=-lm
 
 
