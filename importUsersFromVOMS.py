@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import VOMSAdmin
 from VOMSAdmin import VOMSCommands
 import re
@@ -10,10 +11,13 @@ import ldap.filter
 parser = ConfigParser.SafeConfigParser();
 parser.read(sys.argv[1]);
 
-vo = sys.argv[2]
+vo = sys.argv[2];
 
 #  group  id
 defaultGid = parser.getint("User","group");
+
+# all user ids start from 
+startUid = parser.getint("User","start");
 
 # connection to VOMS server
 vomsConnection = VOMSCommands.VOMSAdminProxy(host=parser.get("VOMS","host"),
@@ -45,11 +49,15 @@ base_dn = parser.get("LDAP","base_dn");
 user_base = parser.get("LDAP","user_base");
 ldapConnection = ldap.initialize(ldap_uri);
 
-maxUid = max([int(uid[1]['uidNumber'][0])
+try:
+    maxUid = max([int(uid[1]['uidNumber'][0])
               for uid in ldapConnection.search_s(user_base,
                                                  ldap.SCOPE_SUBTREE,
-                                                 "(&(!(uid=nfsnobody))(objectClass=posixAccount))",
+                                                 "(&(gid=%d)(objectClass=posixAccount))" % (defaultGid), 
                                                  ["uidNumber"])])
+except ValueError:
+    maxUid = startUid
+    
 startUid = maxUid + 1;
 
 # connection to mysql
