@@ -383,4 +383,5 @@ body, html {
         }
         .dijitArrowButtonInner {display:none;}
         .dijitMenuItem {font-size: small;}
+        .dojoxGridCell small a {color:#069;}
 
