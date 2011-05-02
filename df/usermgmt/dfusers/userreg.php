@@ -5,12 +5,12 @@ include 'config.php';
 //$db_name = 'dfUsers';
 //$db_table = 'dfUser';
 //$db_server_port = 'localhost';
-//$db_user = 'USER';
-//$db_password = 'PASSWORD';
+//$db_user = 'DB-USER';
+//$db_password = 'DB-PASSWORD';
 
-$notify_to = "vladimir.mencl@canterbury.ac.nz";
-$notify_from = "BeSTGRID TEST DataFabric <no-reply@$_SERVER[SERVER_NAME]";
-$notify_subject_prefix = "BeSTGRID TEST DataFabric";
+//$notify_to = "help@bestgrid.org";
+//$notify_from = "BeSTGRID DataFabric <no-reply@$_SERVER[SERVER_NAME]";
+//$notify_subject_prefix = "BeSTGRID DataFabric";
 
 $st_name = 'shared-token';
 $cn_name = 'cn';
