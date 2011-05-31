@@ -5,6 +5,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/select.h>
 #include <netdb.h>
 #include "geoip.h"
 #include <string.h>
@@ -58,27 +59,44 @@ string GeoIP::request(unsigned long ip)
     struct sockaddr_in addr;
     int sock;
     string ret;
+    struct timeval tv;
 
     memset(&addr,0,sizeof(addr));
-    //addr.sin_addr.s_addr=resolve("freegeoip.net");
-    addr.sin_addr.s_addr=resolve("api.ipinfodb.com");
+    addr.sin_addr.s_addr=resolve("freegeoip.net");
+    //addr.sin_addr.s_addr=resolve("api.ipinfodb.com");
     addr.sin_port=htons(80);
     addr.sin_family=AF_INET;
     sock=socket(AF_INET,SOCK_STREAM,0);
+    tv.tv_sec = 3;
+    tv.tv_usec = 0;
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
     //connect and request information
     if(!connect(sock,(struct sockaddr *)&addr,sizeof(addr)))
     {
         char buf[2048];
         int i;
  
-        //sprintf(buf,"GET /xml/%s HTTP/1.0\r\nHost: freegeoip.net\r\n\r\n",(ip?tostring(ip).c_str():""));
-        sprintf(buf,"GET /v2/ip_query.php?key=%s&ip=%s&timezone=false  HTTP/1.0\nHost: api.ipinfodb.com\nConnection: close\n\n",API_KEY,(ip?tostring(ip).c_str():""));
+        sprintf(buf,"GET /xml/%s HTTP/1.0\r\nHost: freegeoip.net\r\n\r\n",(ip?tostring(ip).c_str():""));
+        //sprintf(buf,"GET /v2/ip_query.php?key=%s&ip=%s&timezone=false  HTTP/1.0\nHost: api.ipinfodb.com\nConnection: close\n\n",API_KEY,(ip?tostring(ip).c_str():""));
         send(sock,buf,strlen(buf),0);
         //wait for full reply
-        while((i=recv(sock,buf,2000,0))>0)
+        while(1)
         {
-            buf[i]=0;
-            ret+=buf;
+            struct timeval tv;
+            fd_set cfs;
+
+            tv.tv_sec=3;
+            tv.tv_usec=0;
+            FD_SET(sock,&cfs);
+            if(select(sock+1,&cfs,NULL,NULL,&tv)<1)
+                 return "";
+            if((i=recv(sock,buf,2000,0))>0)
+            {
+                buf[i]=0;
+                ret+=buf;
+            }
+            else
+                break;
         }
         int pos=ret.find("\r\n\r\n");
         if(pos==-1)
@@ -110,13 +128,19 @@ std::pair<double,double> GeoIP::coord(unsigned long ip)
     if(!str.size())
         return d; //nothing received, return 0,0
     //parse XML
-    auto_ptr<Document> pDoc(parser.Parse(str.c_str(),str.size()));
-    const Element& root=pDoc->GetRoot();
-    //obtain coordinate values
-    string lon=root("Longitude",0).GetValue();
-    string lat=root("Latitude",0).GetValue();
-    d.first=strtod(lat.c_str(),NULL);
-    d.second=strtod(lon.c_str(),NULL);
+    try
+    {
+        auto_ptr<Document> pDoc(parser.Parse(str.c_str(),str.size()));
+        const Element& root=pDoc->GetRoot();
+        //obtain coordinate values
+        string lon=root("Longitude",0).GetValue();
+        string lat=root("Latitude",0).GetValue();
+        d.first=strtod(lat.c_str(),NULL);
+        d.second=strtod(lon.c_str(),NULL);
+    }
+    catch(...)
+    {
+    }
     return d;
 }
 
@@ -293,7 +317,11 @@ int main(int argc,char *argv[])
         printf("%s\n",hosts[mindistindex].first.c_str());
     }
     else
-        printf("%s0\n",(bPrintDistance?"0 ":""));
+    {
+        //printf("%s0\n",(bPrintDistance?"0 ":""));
+ 
+        printf("%s\n",DEFAULT_HOST);
+    }
 #endif
 
     return 0;
