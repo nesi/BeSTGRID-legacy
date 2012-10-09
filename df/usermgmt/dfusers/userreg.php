@@ -105,6 +105,18 @@ if ($num_rows == 0) {
    if (!$row) die ("mysql_fetch_assoc failed");
    mysql_free_result($result);
 
+   # sort multiple eduPersonAffiliation values before comparing them with the stored value
+   if (isset($user_data["duAffiliation"]) && $user_data["duAffiliation"]) {
+      $values = explode(";",$user_data["duAffiliation"]);
+      sort($values);
+      $user_data["duAffiliation"] = implode(";",$values);
+   };
+   if (isset($row["duAffiliation"]) && $row["duAffiliation"]) {
+      $values = explode(";",$row["duAffiliation"]);
+      sort($values);
+      $row["duAffiliation"] = implode(";",$values);
+   };
+
    $update_fields = array();
    foreach ($user_data as $key => $value) {
      print "$key: new value: \"$value\" old value: \"". $row[$key] . "\"\n";
