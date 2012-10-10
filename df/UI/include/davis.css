@@ -170,7 +170,7 @@ a.gf-branding-clickable {
 /* Lee-Yan's styles */
 
 #topContainer {
-	background:url(http://df.auckland.ac.nz/images/bg_body.gif) repeat-x top left; 
+	background:url(/images/bg_body.gif) repeat-x top left; 
 	margin:0 -5px 0 -5px
 	}
 
@@ -219,7 +219,7 @@ td .text small {padding:0 0 0 8px; font-size:90%; margin-right:-10px;}
 	}
 
 #uploadButton td {
-	background:#fff url(http://df.auckland.ac.nz/images/btn_upload.gif) no-repeat top left; 
+	background:#fff url(/images/btn_upload.gif) no-repeat top left; 
 	color:#069;
 	width:90px;
 	height:26px;
@@ -228,7 +228,7 @@ td .text small {padding:0 0 0 8px; font-size:90%; margin-right:-10px;}
 	}
 
 #createDirectoryButton td {
-	background:#fff url(http://df.auckland.ac.nz/images/btn_create-directory.gif) no-repeat top left; 
+	background:#fff url(/images/btn_create-directory.gif) no-repeat top left; 
 	color:#069;
 	width:120px;
 	height:26px;
@@ -237,7 +237,7 @@ td .text small {padding:0 0 0 8px; font-size:90%; margin-right:-10px;}
 	}
 
 #emptyTrashButton td {
-	background:#fff url(http://df.auckland.ac.nz/images/btn_empty-trash.gif) no-repeat top left; 
+	background:#fff url(/images/btn_empty-trash.gif) no-repeat top left; 
 	color:#069;
 	width:110px;
 	height:26px;
@@ -260,7 +260,7 @@ filter:alpha(opacity=50);
 .dojoxGridRowTable .link {color:#069;}
 
 #listingGrid {
-	background-image: url(http://df.auckland.ac.nz/images/bg_table.gif); 
+	background-image: url(/images/bg_table.gif); 
 	background-repeat:repeat;
 	}
 
@@ -286,15 +286,15 @@ filter:alpha(opacity=50);
         opacity: 0.5;
 }
 
-#toggleAllButton {background:url(http://df.auckland.ac.nz/images/btn_select.gif) no-repeat top left;}
-#accessControlButton {background:url(http://df.auckland.ac.nz/images/btn_access-control.gif) no-repeat top left;}
-#metadataButton {background:url(http://df.auckland.ac.nz/images/btn_metadata.gif) no-repeat top left;}
-#replicasButton {background:url(http://df.auckland.ac.nz/images/btn_replicas.gif) no-repeat top left;}
-#renameButton {background:url(http://df.auckland.ac.nz/images/btn_rename.gif) no-repeat top left;}
-#copyButton {background:url(http://df.auckland.ac.nz/images/btn_copy.gif) no-repeat top left;}
-#moveButton {background:url(http://df.auckland.ac.nz/images/btn_move.gif) no-repeat top left;}
-#deleteButton {background:url(http://df.auckland.ac.nz/images/btn_delete.gif) no-repeat top left;}
-#sharingButton {background:url(http://df.auckland.ac.nz/images/btn_share.gif) no-repeat top left;}
+#toggleAllButton {background:url(/images/btn_select.gif) no-repeat top left;}
+#accessControlButton {background:url(/images/btn_access-control.gif) no-repeat top left;}
+#metadataButton {background:url(/images/btn_metadata.gif) no-repeat top left;}
+#replicasButton {background:url(/images/btn_replicas.gif) no-repeat top left;}
+#renameButton {background:url(/images/btn_rename.gif) no-repeat top left;}
+#copyButton {background:url(/images/btn_copy.gif) no-repeat top left;}
+#moveButton {background:url(/images/btn_move.gif) no-repeat top left;}
+#deleteButton {background:url(/images/btn_delete.gif) no-repeat top left;}
+#sharingButton {background:url(/images/btn_share.gif) no-repeat top left;}
 
 
 
