@@ -323,59 +323,69 @@ background:none;
 
 .dijitDialogTitle {font-family:Arial,Helvetica,sans-serif;}
 
-                body, html {width:100%; height:100%; margin:0; padding:0;}
-                .text{font-family:Trebuchet MS, Helvetica, sans-serif;}
-                .text_small{font-family:Trebuchet MS, Helvetica, sans-serif; font-size:small;}
-                .text_small_small{font-family:Trebuchet MS, Helvetica, sans-serif; font-size:x-small;}
-                h1{margin:0px;}
-                button {background-color:lightGrey;}
-                input {background-color:white;}
-                #button_table{margin: 0px 0px 0px -4px;}
-                #mode_buttons{margin: -2px 2px 0px 0px;}
-                #header{margin: 0px 0px -12px 0px;}
-                #hor_rule{margin: 0px -12px -12px 0px;}
-                #table.HoverGreen {background:#509C52; color:#FFF;}
-                #table.HoverGrey {background:#CCC; color:#FFF; border:1px solid #CCC;}
-                .hoverBorderSide {margin:0px; line-height:120%; border-bottom: 1px solid #fff;}
-                .link{text-decoration:none; color:#04E;}
-                .darklink{text-decoration:none; color:black;}
-                .linkOver{text-decoration:underline;}
-                .link:hover{text-decoration:underline; color:#04E;}
-                .darklink:hover{text-decoration:underline; color:black;}
-                .activeItem{background:#AFCAAF; color:black; font-family:Arial, Helvetica, sans-serif; font-weight:bold;}
-                .activeItem:hover{background:#509C52; color:#FFF;}
-                .inactiveItem{background:#AFCAAF; color:#AFAFAF; font-family:Arial, Helvetica, sans-serif; font-weight:bold;}
-                .invisible{background:white; color:white; border: 0px;}
-                .linkImage{text-decoration:underline; color:#04E;}
-                .dojoxGrid-row-odd td {background:#e8f2ff;}
-        #metadataGrid {border: 1px solid #333; width: 400px; height: 300px;}
-                #permissionsGrid {border: 1px solid #333; width: 600px; height: 200px;}
-                #sharesGrid {border: 1px solid #333;}
-                #replicasGrid {border: 1px solid #333;}
-                #listingGrid .dojoxGridHeader .dojoxGridCell {background: #E8E8E8; font-size: 120%; text-align: center; /*border: 1px solid; border-color: white;*/ padding-bottom: 4px;}
-                #listingGrid .dojoxGridRow {/*background: white;*/}
-                #listingGrid .dojoxGridRowSelected {background: #C9D8E9;}
-                #listingGrid .dojoxGridCell {border: 0px; padding-right: 10px; text-align: right;}
-                #listingGrid {border-bottom:solid; border-width:1px; border-color:lightgrey;}
-                #listingGrid .dojoxGridMasterHeader {background:white;} /* These 2 are to make the left listingTable border disappear */
+/* Original ARCS branding code (with local modifications) starts here */
+body, html {width:100%; height:100%; margin:0; padding:0;}
+.text{font-family:Trebuchet MS, Helvetica, sans-serif;}
+.text_small{font-family:Trebuchet MS, Helvetica, sans-serif; font-size:small;}
+.text_small_small{font-family:Trebuchet MS, Helvetica, sans-serif; font-size:x-small;}
+h1{margin:0px;}
+button {background-color:lightGrey;} 
+input {background-color:white;}
+#button_table{margin: 0px 0px 0px -4px;}
+#mode_buttons{margin: -2px 2px 0px 0px;}
+#header{margin: 0px 0px -12px 0px;}
+#hor_rule{margin: 0px -12px -12px 0px;}
+#table.HoverGreen {background:#509C52; color:#FFF;}
+#table.HoverGrey {background:#CCC; color:#FFF; border:1px solid #CCC;}
+.borderItem{border: 1px solid #CCC;}
+.hoverBorderSide {margin:0px; line-height:120%; border-bottom: 1px solid #fff;}
+.link{text-decoration:none; color:#04E;}
+.darklink{text-decoration:none; color:black;}
+.linkOver{text-decoration:underline;}
+.link:hover{text-decoration:underline; color:#04E;}
+.darklink:hover{text-decoration:underline; color:black;}
+.activeItem{background:#AFCAAF; color:black; font-family:Arial, Helvetica, sans-serif; font-weight:bold;}
+.activeItem:hover{background:#509C52; color:#FFF;}
+.inactiveItem{background:#AFCAAF; color:#AFAFAF; font-family:Arial, Helvetica, sans-serif; font-weight:bold;}
+.invisible{background:white; color:white; border: 0px;}
+.linkImage{text-decoration:underline; color:#04E;}
+.dojoxGrid-row-odd td {background:#e8f2ff;}
+#metadataGrid {border: 1px solid #333; width: 400px; height: 300px;}
+#permissionsGrid {border: 1px solid #333; width: 600px; height: 200px;}
+#sharesGrid {border: 1px solid #333;}
+#replicasGrid {border: 1px solid #333;}
+#listingGrid .dojoxGridHeader .dojoxGridCell {background: #E8E8E8; font-size: 120%; text-align: center; /*border: 1px solid; border-color: white;*/ padding-bottom: 4px;}
+#listingGrid .dojoxGridRow {/*background: white;*/}
+#listingGrid .dojoxGridRowSelected {background: #C9D8E9;}
+#listingGrid .dojoxGridCell {border: 0px; padding-right: 10px; text-align: right;}
+#listingGrid {border-bottom:solid; border-width:1px; border-color:lightgrey;}
+#listingGrid .dojoxGridMasterHeader {background:white;} /* These 2 are to make the left listingTable border disappear */
 #listingGrid .dojoxGridMasterView {background:white;}
-                .tundra .dojoxGridCellFocus {border: 0px !important;}           /* Hide focus border in grid */
-                #destinationGrid .dojoxGridHeader .dojoxGridCell {display:none;}
-                #destinationGrid .dojoxGridRow {background: white;}
-                #destinationGrid .dojoxGridRowSelected {background: #C9D8E9;}
-                #destinationGrid .dojoxGridCell {border: 0px; padding-right: 10px; text-align: right;}
-                .questionIcon {
-                background: url('/images/ic_help.gif') no-repeat top left; padding:0 0 0 0; margin:0 0 0 0;
-                width: 22px;
-                height: 22px;
-        }
-        .iconButton .dijitButtonNode {
-                        background: #069;
-                        color: white;
-                        padding: 0px;
-                        border: 0px solid black;
-        }
-        .dijitArrowButtonInner {display:none;}
-        .dijitMenuItem {font-size: small;}
-        .dojoxGridCell small a {color:#069;}
-
+.tundra .dojoxGridCellFocus {border: 0px !important;}           /* Hide focus border in grid */
+#destinationGrid .dojoxGridHeader .dojoxGridCell {display:none;}
+#destinationGrid .dojoxGridRow {background: white;}
+#destinationGrid .dojoxGridRowSelected {background: #C9D8E9;}
+#destinationGrid .dojoxGridCell {border: 0px; padding-right: 10px; text-align: right;}
+#searchResultsGrid .dojoxGridHeader .dojoxGridCell {/* text-indent:10px; */ background: #E8E8E8; font-size: 100%; text-align: center; /* border: 1px solid; border-color: white; */ padding-bottom: 4px;}
+#searchResultsGrid .dojoxGridRow {background: white;}
+#searchResultsGrid .dojoxGridRowSelected {background: #C9D8E9;}
+#searchResultsGrid .dojoxGridCell {border: 0px; padding-right: 10px; text-align: right;}
+.questionIcon { background: url('/images/ic_help.gif') no-repeat top left; padding:0 0 0 0; margin:0 0 0 0; width: 22px; height: 22px; }
+.iconButton .dijitButtonNode { background: #069; color: white; padding: 0px; border: 0px solid black; }
+.dijitArrowButtonInner {display:none;}
+.dijitMenuItem {font-size: small;}
+.dojoxGridCell small a {color:#069;}
+.dojoDndItem {padding:1px 3px;}
+.dojoDndItemOver {background-color: #60a1ea; cursor:pointer;}
+.dojoDndItemSelected {background-color: #C9D8E9;}
+.dojoDndItemAnchor {background-color: #C9D8E9;}
+.tagListHead {padding: 0px 30px 10px 30px; font-weight:bold; font-size:medium; font-family:Arial, Helvetica, sans-serif; text-align:center; white-space: nowrap;}
+.tagList {height:20em; border:inset grey; text-align:left; font-size:medium; font-family:Arial, Helvetica, sans-serif; overflow:auto; background-color:#F8F8F8; min-width: 170px;}
+.noticeDialog .dijitDialogCloseIcon {display:none;}
+.noticeDialog .dijitDialogTitleBar {display:none;}
+.noticeDialog .dijitDialogTitle {display:none;}
+.noticeDialog .dijitDialogPaneContent {padding:0; margin:0; border:0}
+.searchTagTextBox .dijitTextBox {cursor: s-resize !important; border: 1px dotted #808080; background:#E0E0E0; color: black;}
+.searchTagTextBox .dijitTextBox:hover {background:#D0D0D0; border: 1px dotted black;}
+.searchTagTextBox .dijitTextBox:active {background:white; border: 1px solid #E0E0E0;}
+.searchTagTextBox .dijitInputInner {cursor: s-resize !important} /* Need this for dojo 1.6 */
