@@ -1,0 +1,80 @@
+--- /opt/davis/davis-0.9.5.dev-r700/webapps/root/WEB-INF/ui.html	2011-02-22 12:26:46.000000000 +1300
++++ ui.html	2011-05-02 13:07:37.000000000 +1200
+@@ -555,14 +555,14 @@
+ 				'<table border="0" cellspacing="0" cellpadding="2">'+
+         		'	<tr class="text">'+
+           		'		<td>'+
+-				'			<table id="uploadButton" class="activeItem" style="border:1px solid #CCC;" cellspacing="0" cellpadding="4">'+
++				'			<table id="uploadButton" class="activeItem" cellspacing="0" cellpadding="4">'+
+              	'				<tr>'+
+                 '					<td onclick="if (!activeItemIsEnabled(\'uploadButton\')) return; enableButton(\'uploadCancelButton\', true); enableButton(\'uploadStartButton\', true); setUploadStatus(\'\'); showUploadDialog(true)"><img src="/images/arrow_up.gif" alt="" width="16" height="16" />&nbsp;Upload File</td>'+
+               	'				</tr>'+
+           		'			</table>'+
+ 				'		</td>'+
+           		'		<td>'+
+-				'			<table id="createDirectoryButton" class="activeItem" style="border:1px solid #CCC;" cellspacing="0" cellpadding="4">'+
++				'			<table id="createDirectoryButton" class="activeItem" cellspacing="0" cellpadding="4">'+
+             	'				<tr>'+
+               	'					<td onclick="if (!activeItemIsEnabled(\'createDirectoryButton\')) return; dialogCreateDir.show()"><img src="/images/folder_new.gif" alt="" width="16" height="16" />&nbsp;Create Directory</td>'+
+             	'				</tr>'+
+@@ -942,7 +942,7 @@
+ 					if (object.objectType == "button") 
+ 						buttonSessionHTML +=
+ 			      			'<td>'+
+-							'	<table id="'+object.name+'" class="activeItem" style="border:1px solid #CCC;" cellspacing="0" cellpadding="4" onclick="if (!activeItemIsEnabled(\''+object.name+'\')) return; dynamicButtonHandler('+i+')">'+
++							'	<table id="'+object.name+'" class="activeItem" cellspacing="0" cellpadding="4" onclick="if (!activeItemIsEnabled(\''+object.name+'\')) return; dynamicButtonHandler('+i+')">'+
+ 			         		'		<tr>'+
+ 			            	'			<td>&nbsp;'+object.displayTitle+'</td>'+
+ 			          		'		</tr>'+
+@@ -952,7 +952,7 @@
+ 				if (location == "selection") {
+ 					if (object.objectType == "button") 
+ 						buttonSelectionHTML +=
+-							'<table width="100%" class="hoverBorderSide" style="border:1px solid #CCC;" cellspacing="0" cellpadding="4" onclick="if (!activeItemIsEnabled(\''+object.name+'\')) return; dynamicButtonHandler('+i+')">'+
++							'<table width="100%" class="hoverBorderSide"  cellspacing="0" cellpadding="4" onclick="if (!activeItemIsEnabled(\''+object.name+'\')) return; dynamicButtonHandler('+i+')">'+
+ 				    		'	<tr>'+
+ 				      		'		<td class="activeItem" id="'+object.name+'"">'+object.displayTitle+'</td>'+
+ 				    		'	</tr>'+
+@@ -962,7 +962,7 @@
+ 					if (object.objectType == "button") 
+ 						buttonCollectionHTML +=
+ 		          			'<td>'+
+-		          			'	<table id="'+object.name+'" class="activeItem" style="border:1px solid #CCC;" cellspacing="0" cellpadding="4" onclick="if (!activeItemIsEnabled(\''+object.name+'\')) return; dynamicButtonHandler('+i+')">'+
++		          			'	<table id="'+object.name+'" class="activeItem" cellspacing="0" cellpadding="4" onclick="if (!activeItemIsEnabled(\''+object.name+'\')) return; dynamicButtonHandler('+i+')">'+
+ 	         				'		<tr>'+
+ 	            			'			<td><img src="/images/1px.png" alt="" style="height:16px; width:0px;" />&nbsp;'+object.displayTitle+'</td>'+
+ 	            			'		</tr>'+
+@@ -1218,7 +1218,7 @@
+ 			if (inTrash) {
+ 				if (trashEmpty)
+ 					dojo.html.set(trashEmpty, 
+-							'<table id="emptyTrashButton" class="activeItem" style="border:1px solid #CCC;" cellspacing="0" cellpadding="4">'+
++							'<table id="emptyTrashButton" class="activeItem" cellspacing="0" cellpadding="4">'+
+ 							'	<tr>'+
+ 							'		<td onclick="if (!activeItemIsEnabled(\'emptyTrashButton\')) return; selectAll(true); deleteSelection()"><strong><img src="/images/delete.png" alt="" width="16" height="16" />&nbsp;Empty Trash</strong></td>'+
+ 							'	</tr>'+
+@@ -2574,7 +2574,7 @@
+ 			<table width="100%" border="0px" cellspacing="0" cellpadding="0">
+ 				<tr>
+ 		    		<td valign="bottom">
+-						<h1 class="text"><img src="<parameter organisationlogo/>" alt="" width="<parameter organisationlogowidth/>" height="<parameter organisationlogoheight/>" />&nbsp;<parameter authenticationrealm/></h1>
++						<h1 class="text"> <img src="<parameter organisationlogo/>" alt="" width="<parameter organisationlogowidth/>" height="<parameter organisationlogoheight/>" />&nbsp;<parameter authenticationrealm/></h1>
+ 					</td>
+ 					<td align="right" valign="top">
+ 						<table border="0" cellspacing="0" cellpadding="0">
+@@ -2586,11 +2586,11 @@
+ 			        				<tr>
+ 			        					<td id="sessionButtonsHTML" style="width:auto;" align="right" valign="top"></td>
+ 			        					<td align="right" style="width:100%;" valign="top">
+-			        						<a title="Refresh this page" onclick="refreshCurrentDirectory(); listingStore.refreshDisplay(true); return false" href="Refresh this page"><img border="0" alt="refresh" src="/images/refresh.png" width="32" height="32"/></a>
+-											<span id="homeButton"><a title="Go to your home folder" onclick="listingStore.gotoDirectory('<parameter home/>', true); return false" href="<parameter home/>"><img border="0" alt="Go to your home folder" src="/images/home.png" width="28" height="32"/></a></span>
+-											<span id="trashButton"><a title="Go to your trash folder" onclick="listingStore.gotoDirectory('<parameter trash/>', true); return false" href="<parameter trash/>"><img border="0" alt="Go to your trash folder" src="/images/trash.png" width="28" height="32"/></a></span>
++			        						<a title="Refresh this page" onclick="refreshCurrentDirectory(); listingStore.refreshDisplay(true); return false" href="Refresh this page"><img border="0" alt="refresh" src="/images/ic_refresh.gif" width="32" height="32"/></a>
++											<span id="homeButton"><a title="Go to your home folder" onclick="listingStore.gotoDirectory('<parameter home/>', true); return false" href="<parameter home/>"><img border="0" alt="Go to your home folder" src="/images/ic_home.gif" width="28" height="32"/></a></span>
++											<span id="trashButton"><a title="Go to your trash folder" onclick="listingStore.gotoDirectory('<parameter trash/>', true); return false" href="<parameter trash/>"><img border="0" alt="Go to your trash folder" src="/images/ic_trash.gif" width="28" height="32"/></a></span>
+ 											<span id="loginButton"><a title="Login with authentication" onclick="login(); return false" href="login"><img border="0" alt="Login with authentication" src="/images/login.png" width="26" height="32"/></a></span>
+-											<span id="logoutButton"><a title="Logout of this session" onclick="logout(); return false" href="logout"><img border="0" alt="Logout of this session" src="/images/logout.png" width="26" height="32"/></a></span>
++											<span id="logoutButton"><a title="Logout of this session" onclick="logout(); return false" href="logout"><img border="0" alt="Logout of this session" src="/images/ic_logout.gif" width="26" height="32"/></a></span>
+ 											<span id="sharesButton"><a title="Show your shared files" onclick="showShares(true); return false" href="shares"><img border="0" alt="Show your shared files" src="/images/unshare.png" width="32" height="32"/></a></span>	        					
+ 			        					</td>
+ 			        					<td align="left" valign="top" style="width:1px; padding-left:2px;" >
