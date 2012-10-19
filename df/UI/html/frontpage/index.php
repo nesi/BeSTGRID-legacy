@@ -10,50 +10,7 @@ $srv_name=trim($srv_name);
 ?>
 
 <title><?=$df_title?></title>
-<style>
-body {
-	background: url(/images/bg_body.gif) repeat-x top left;
-	font-family:Trebuchet MS, Helvetica, sans-serif;
-	}
-	
-#logo {margin:3px 0 35px 1px;}
-	
-a {
-	text-decoration: none;
-	color:#069;
-	background: none;
-}
-
-a:visited {color:#6699CC }
-a:hover {text-decoration: underline;}
-
-h1, h2 {
-	color:#069; 
-	background: none;
-	font-weight: normal;
-	margin: 0;
-	padding-top: .5em;
-	padding-bottom: .17em;
-	border-bottom:1px solid #069;
-	font-size:1.2em;
-}
-
-p, ul {
-	font-size:.8em;
-	color:#333;
-	line-height:160%;
-	}
-	
-table#datafabric_header {width:100%; height:80px; margin-bottom:40px;}
-
-#userPanel {color:#fff; font-size:.85em; font-weight:normal;}
-
-#userPanel a {color:#FF6;}
-
-/* etc */
-
-h1 b {display:none;}
-</style>
+<link href="bg_style.css" rel="stylesheet" type="text/css" />
 
 </head>
 <body>
