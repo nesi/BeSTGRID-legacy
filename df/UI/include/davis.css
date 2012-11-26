@@ -370,7 +370,7 @@ input {background-color:white;}
 #searchResultsGrid .dojoxGridRow {background: white;}
 #searchResultsGrid .dojoxGridRowSelected {background: #C9D8E9;}
 #searchResultsGrid .dojoxGridCell {border: 0px; padding-right: 10px; text-align: right;}
-.questionIcon { background: url('/images/ic_help.gif') no-repeat top left; padding:0 0 0 0; margin:0 0 0 0; width: 22px; height: 22px; }
+.questionIcon {background-image: url('/images/help.png'); width: 32px; height: 32px;}
 .iconButton .dijitButtonNode { background: #069; color: white; padding: 0px; border: 0px solid black; }
 .dijitArrowButtonInner {display:none;}
 .dijitMenuItem {font-size: small;}
