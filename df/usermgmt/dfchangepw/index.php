@@ -302,7 +302,7 @@ if ($isOK) {
         print "<P>You can now:\n";
         print "<div id=\"listingBreadCrumb\"><UL>\n";
         print "<LI>Return back to the DataFabric: <a href=\"$duUserHomeUrl\">$duUserHomeUrl</a></LI>\n";
-        print "<LI>Read the documentation on using the DataFabric with <a href=\"$df_non_browser_tools_link\">non-web-browser tools</a></LI>\n";
+        print "<LI>Read the documentation on using the DataFabric with <a href=\"$df_non_browser_tools_link\" target=\"_blank\">non-web-browser tools</a></LI>\n";
         print "<LI>Change your password <a href=\"$_SERVER[REQUEST_URI]\">again</a></LI>\n";
         print "</div></UL>\n";
    };
@@ -310,7 +310,7 @@ if ($isOK) {
  
 
    if ( $_SERVER["REQUEST_METHOD"] <> "POST" || $err_msg ) {
-      print "<P>You may change your <span id=\"listingBreadCrumb\"><a href=\"$df_non_browser_tools_link\">non-web-browser tools password</a></span> here.<P>Please enter your current details and the new password (retyping the same password twice):\n<P>\n";
+      print "<P>You may change your <span id=\"listingBreadCrumb\"><a href=\"$df_non_browser_tools_link\" target=\"_blank\">non-web-browser tools password</a></span> here.<P>Please enter your current details and the new password (retyping the same password twice):\n<P>\n";
       print '<FORM METHOD="POST" action="'.$_SERVER['REQUEST_URI'].'" name="DataFabricChangePassword"><p>' . "\n";
       print "<TABLE><TBODY>\n";
       print '<TR><TD><span class="text">Username:</span></TD><TD><INPUT TYPE="text" name="DFUsername" size="20" value="" maxlength="20" ></TD></TR>' . "\n";

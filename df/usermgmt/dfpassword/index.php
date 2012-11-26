@@ -253,7 +253,7 @@ if ($isOK && $duUserName) {
         print "<P>You can now:\n";
         print "<div id=\"listingBreadCrumb\"><UL>\n";
         print "<LI>Return back to the DataFabric: <a href=\"$duUserHomeUrl\">$duUserHomeUrl</a></LI>\n";
-        print "<LI>Read the documentation on using the DataFabric with <a href=\"$df_non_browser_tools_link\">non-web-browser tools</a></LI>\n";
+        print "<LI>Read the documentation on using the DataFabric with <a href=\"$df_non_browser_tools_link\" target=\"_blank\">non-web-browser tools</a></LI>\n";
         print "<LI>Set your password <a href=\"$_SERVER[REQUEST_URI]\">again</a></LI>\n";
         print "</div></UL>\n";
     };
@@ -261,7 +261,7 @@ if ($isOK && $duUserName) {
     if ($err_msg) print "<P><font color=\"red\"><STRONG>Error:</STRONG> $err_msg</font>\n";
 
     if ( $_SERVER["REQUEST_METHOD"] <> "POST" || $err_msg ) {
-        print "<P>You may set a <span id=\"listingBreadCrumb\"><a href=\"$df_non_browser_tools_link\">non-web-browser tools password</a></span> for your account here:\n";
+        print "<P>You may set a <span id=\"listingBreadCrumb\"><a href=\"$df_non_browser_tools_link\" target=\"_blank\">non-web-browser tools password</a></span> for your account here:\n";
         print '<FORM METHOD="POST" action="'.$_SERVER['REQUEST_URI'].'" name="DataFabricSetPassword"><p>' . "\n";
         print "<TABLE><TBODY>\n";
         print "<TR><TD><span class=\"text\">Account name:</span></TD><TD><span class=\"text\">$duUserName</span></TD></TR>\n";
