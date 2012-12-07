@@ -169,26 +169,37 @@ a.gf-branding-clickable {
 
 /* Lee-Yan's styles */
 
+/*
+revert: no background, re-enable horizontal rule
 #topContainer {
 	background:url(/images/bg_body.gif) repeat-x top left; 
 	margin:0 -5px 0 -5px
 	}
 
 #hor_rule {display:none;}
+*/
 
+
+/* make horizontal line grey to match new BeSTGRID branding */
+#hor_rule td > table td {
+    background-color: #DDDDDD;
+}
+
+/* change text color to white to hide it */
 h1.text {
 	font-size:1px; 
-	color:#069; 
+	color:white; 
 	position:relative; 
 	margin:-45px 0 0 0;
 	}
 
 h1.text img {
-	width:400px; 
-	height:70px; 
+	width:347px; 
+	height:65px; 
 	margin:5px 0 0 8px;
 	}
 
+/* revert: do not force buttons to be tiny ; do not make links yellow
 .dijitContentPane img,
 .dijitContentPane .iconButton { 
 	width:20px; 
@@ -204,6 +215,7 @@ h1.text img {
 	}
 
 .dijitContentPane td a {color:#ff0}
+*/
 
 .text {color:#333;}
 
@@ -371,7 +383,7 @@ input {background-color:white;}
 #searchResultsGrid .dojoxGridRowSelected {background: #C9D8E9;}
 #searchResultsGrid .dojoxGridCell {border: 0px; padding-right: 10px; text-align: right;}
 .questionIcon {background-image: url('/images/help.png'); width: 32px; height: 32px;}
-.iconButton .dijitButtonNode { background: #069; color: white; padding: 0px; border: 0px solid black; }
+.iconButton .dijitButtonNode { background: white; color: white; padding: 0px; border: 0px solid black; }
 .dijitArrowButtonInner {display:none;}
 .dijitMenuItem {font-size: small;}
 .dojoxGridCell small a {color:#069;}
