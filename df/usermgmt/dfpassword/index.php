@@ -186,6 +186,17 @@ if ($isOK && $duUserName) {
 		    </td>
 		</tr>
 	    </table>
+	    <table id="hor_rule" width="100%" border="0" cellpadding="0" cellspacing="0" style="padding-top:10px; padding-bottom:20px;">
+			<tr>
+			<td>
+					<table width="100%" border="0" cellpadding="0" cellspacing="0">
+					<tr>
+						<td bgcolor="#000000"><img src="/images/1px.png" alt="" width="1" height="1" /></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	    </table>
 	</span>
 
 <!-- real page content starts here -->
