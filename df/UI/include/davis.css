@@ -207,13 +207,16 @@ h1.text img {
 	margin:0 10px 0 0;
 	float:left
 	}
+*/
 
+/* keep the font-size to make the "Upload File" and "Create Directory" buttons nice - but comment out the rest */
 .dijitContentPane td {
-	color:#fff;
+	/* color:#fff; */
 	font-size:.95em; 
-	padding:5px 0 0 0
+	/* padding:5px 0 0 0; */
 	}
 
+/*
 .dijitContentPane td a {color:#ff0}
 */
 
@@ -349,7 +352,7 @@ input {background-color:white;}
 #hor_rule{margin: 0px -12px -12px 0px;}
 #table.HoverGreen {background:#509C52; color:#FFF;}
 #table.HoverGrey {background:#CCC; color:#FFF; border:1px solid #CCC;}
-.borderItem{border: 1px solid #CCC;}
+/* .borderItem{border: 1px solid #CCC;} */
 .hoverBorderSide {margin:0px; line-height:120%; border-bottom: 1px solid #fff;}
 .link{text-decoration:none; color:#04E;}
 .darklink{text-decoration:none; color:black;}
