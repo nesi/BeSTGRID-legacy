@@ -9,9 +9,9 @@ $iCommandsPath = "/opt/iRODS/iRODS/clients/icommands/bin";
 $ipasswd = "$iCommandsPath/ipasswd";
 $min_password_length = 8;
 
-$irodsHost='gridgwtest.canterbury.ac.nz'; # must be the master for the zone
+$irodsHost='ngdata.canterbury.ac.nz'; # must be the master for the zone
 $irodsPort=1247;
-$irodsZone='BeSTGRID-DEV';
+$irodsZone='BeSTGRID';
 
 $verbose = 0;
 
