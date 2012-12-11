@@ -17,7 +17,6 @@ $df_title = $davis_properties['authentication-realm']; # note: property is "auth
 $irodsZone = $davis_properties['zone-name'];
 $df_path = "$irodsZone/home/";
 $helpURL = $davis_properties['helpURL'];
-$df_non_browser_tools_link = "$helpURL#$df_non_browser_tools_tag";
 $logo_width = $logo_height = "";
 
 if ( $davis_properties['organisation-logo-geometry'] && strpos($davis_properties['organisation-logo-geometry'],"x")>0) {
