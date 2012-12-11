@@ -7,6 +7,27 @@ include 'config.php';
 $remote_addr = $_SERVER["REMOTE_ADDR"];
 $srv_name=`$geoip_path --client $remote_addr --servers $df_servers`;
 $srv_name=trim($srv_name);
+
+
+# read properties
+include 'read-properties.php';
+$davis_properties = parse_properties(file_get_contents($davis_properties_file));
+
+$df_title = $davis_properties['authentication-realm']; # note: property is "authentication-realm" but Davis substitution in ui.html is "authenticationrealm"
+$irodsZone = $davis_properties['zone-name'];
+$df_path = "$irodsZone/home/";
+$helpURL = $davis_properties['helpURL'];
+$df_non_browser_tools_link = "$helpURL#$df_non_browser_tools_tag";
+$logo_width = $logo_height = "";
+
+if ( $davis_properties['organisation-logo-geometry'] && strpos($davis_properties['organisation-logo-geometry'],"x")>0) {
+    # if logo geometry is specified as nnnxmmm
+    $logo_geom_arr = explode("x", $davis_properties['organisation-logo-geometry'], 2);
+    $logo_width = $logo_geom_arr[0];
+    $logo_height = $logo_geom_arr[1];
+};
+
+
 ?>
 
 <title><?=$df_title?></title>
@@ -14,9 +35,26 @@ $srv_name=trim($srv_name);
 
 </head>
 <body>
+
+<?= $davis_properties['ui-include-body-header'] ?>
+
 <table width="100%">
-<tbody><tr><th align="LEFT"><img id="logo" src="/images/lg_BeSTGRID-DataFabric.gif" alt="BeSTGRID logo"></th></tr></tbody>
+<tbody><tr><td align="LEFT"><img id="logo" src="<?= $davis_properties['organisation-logo'] ?>" alt="BeSTGRID logo"></td></tr></tbody>
 </table>
+
+
+                    <table id="hor_rule" width="100%" border="0" cellpadding="0" cellspacing="0" style="padding-top:10px; padding-bottom:20px;">
+                                <tr>
+                                <td>
+                                                <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                                                <tr>
+                                                        <td bgcolor="#DDDDDD"><img src="/images/1px.png" alt="" width="1" height="1" /></td>
+                                                </tr>
+                                        </table>
+                                </td>
+                        </tr>
+                    </table>
+
 <h1><?=$df_title?></h1>
 <p><em>Your nearest DataFabric server appears to be:</em> <strong><?=$srv_name?></strong></p>
 <ul>

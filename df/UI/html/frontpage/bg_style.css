@@ -1,9 +1,9 @@
 body {
-        background: url(/images/bg_body.gif) repeat-x top left;
+        /* background: url(/images/bg_body.gif) repeat-x top left; */
         font-family:Trebuchet MS, Helvetica, sans-serif;
         }
 
-#logo {margin:3px 0 35px 1px;}
+/* #logo {margin:3px 0 35px 1px;} */
 
 a {
         text-decoration: none;
@@ -21,7 +21,7 @@ h1, h2 {
         margin: 0;
         padding-top: .5em;
         padding-bottom: .17em;
-        border-bottom:1px solid #069;
+        /* border-bottom:1px solid #069; */
         font-size:1.2em;
 }
 
