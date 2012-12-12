@@ -15,7 +15,7 @@ $davis_properties = parse_properties(file_get_contents($davis_properties_file));
 
 $df_title = $davis_properties['authentication-realm']; # note: property is "authentication-realm" but Davis substitution in ui.html is "authenticationrealm"
 $irodsZone = $davis_properties['zone-name'];
-$df_path = "$irodsZone/home/";
+$df_path = "/$irodsZone/home/";
 $helpURL = $davis_properties['helpURL'];
 $logo_width = $logo_height = "";
 
