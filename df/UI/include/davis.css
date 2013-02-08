@@ -190,7 +190,7 @@ h1.text {
 	font-size:1px; 
 	color:white; 
 	position:relative; 
-	margin:-45px 0 0 0;
+/*      margin:-45px 0 0 0; */
 	}
 
 h1.text img {
@@ -222,7 +222,7 @@ h1.text img {
 
 .text {color:#333;}
 
-td .text {padding:45px 0 0 0;}
+/* td .text {padding:45px 0 0 0;} */
 
 td small .text {padding:5px 0 0 10px; font-size:120%}
 
