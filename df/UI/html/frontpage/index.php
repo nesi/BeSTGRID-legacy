@@ -58,8 +58,14 @@ if ( $davis_properties['organisation-logo-geometry'] && strpos($davis_properties
 <p><em>Your nearest DataFabric server appears to be:</em> <strong><?=$srv_name?></strong></p>
 <ul>
 <li>Log in using your institution's Identity Provider: <a href="http://<?=$srv_name?><?=$df_path?>">http://<?=$srv_name?><?=$df_path?></a>
-</li><li>Log in using credentials uploaded to MyProxy: <a href="https://<?=$srv_name?><?=$df_path?>">https://<?=$srv_name?><?=$df_path?></a>
-</li></ul>
+</li><li>Log in using your DataFabric username and password: <a href="https://<?=$srv_name?><?=$df_path?>">https://<?=$srv_name?><?=$df_path?></a>
+</li>
+<p>
+
+<li>Access the DataFabric with the iDrop client: <strong><a href="http://iren-web.renci.org/idrop-release/idrop.jnlp">Start iDrop java client</a></strong> (Help: see <strong><a href="http://technical.bestgrid.org/index.php/Using_the_DataFabric#Accessing_the_DataFabric_with_iDrop">iDrop instructions</a></strong>)</li>
+
+
+</ul>
 <h2>User instructions</h2>
 <p>For more information on accessing this service, please see the <strong><a href="http://technical.bestgrid.org/index.php/Using_the_DataFabric">Using the DataFabric</a></strong> manual.</p>
 
