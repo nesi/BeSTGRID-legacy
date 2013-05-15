@@ -4,7 +4,7 @@
 #                Graham Jenkins <graham@vpac.org> Jan. 2010. Rev: 20101117
 
 # Batch size, path, usage check
-BATCH=16
+BATCH=8
 [ -z "$IRODS_HOME" ] && IRODS_HOME=/opt/iRODS/iRODS
 PATH=/bin:/usr/bin:$IRODS_HOME/clients/icommands/bin:/usr/local/bin
 Zone=`iquest "%s" "select ZONE_NAME" 2>/dev/null | head -1`
@@ -62,9 +62,9 @@ while [ -n "$NextIter" ] ; do
       Dir=substr($0,1,length-1)
     }
     else {            # Extract file names from non-collection records,
-      if ($1!="C-") { # and skip those whose size is non-positive ..
+      if ($1!="C-") { # and skip only stale replicas
         amperpos=index($0," & ")
-        if(amperpos>0) if($4>0) print "\""Dir"/"substr($0,amperpos+3)"\""
+        if(amperpos>0) print "\""Dir"/"substr($0,amperpos+3)"\""
       }
     }
   }' | uniq -u | sed 's/\$/\\\\$/g' | # shuf |
@@ -87,7 +87,9 @@ while [ -n "$NextIter" ] ; do
   [ -n "$ListOnly" ] && exit 0
 
   if [ -n "$Loop" ] ; then 
-      sleep 10800
+      #sleep 600 # 10 minutes
+      sleep 1800 # 30 minutes
+      #sleep 10800 # 3 hours
   else
       unset NextIter ; 
   fi
