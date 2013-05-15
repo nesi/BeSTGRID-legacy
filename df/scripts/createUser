@@ -23,12 +23,19 @@ my $mail_host_from = $ENV{HOSTNAME};
 my $create_inbox_path = ""; # default: not to run the script
 
 # Mail-message subroutine.
-sub mail_mess {  # Usage: mail_mess(address, message)
+sub mail_mess {  # Usage: mail_mess(message, address(es))
+  my $message = "Subject: Automatic iRODS User Creation [".$$."]\n\n".shift(@_);
   if ( defined($_[0]) ) {
     if (my $smtp=Net::SMTP->new("localhost") ) {
-      $smtp->mail($ENV{USER}.'@'. $mail_host_from); $smtp->to($_[0]);
-      $smtp->data("To: ",$_[0],"\nSubject: Automatic iRODS User Creation",
-                               " [".$$."]\n\n".$_[1]);
+      $smtp->mail($ENV{USER}.'@'. $mail_host_from);
+      $smtp->to(@_);
+      my $i = 0;
+      while ($i <= $#_) {
+        $message = "To: ".$_[$i]."\n" .$message;
+        $i = $i + 1;
+      }
+      $smtp->data($message);
+
       $smtp->quit();
       #print STDERR "Notified: ".$_[0]."\n\n"
     }
@@ -54,11 +61,11 @@ my $config_file=File::Spec->catdir($config_dir,"createUser.config");
 die "Can't open file: $config_file\n" if ! open(CF,$config_file);
 
 # Extract command-path, look for matching DN-pattern, email address, titles
-my ($path, $addr, $cn, @fields, $st_count, @titles);
+my ($path, @addr, $cn, @fields, $st_count, @titles);
 while ( <CF> ) {
   chomp;
   if      ( substr($_,0,1) eq "I" ) { (@fields)=split(); $path=$fields[1] }
-  elsif   ( substr($_,0,1) eq "A" ) { (@fields)=split(); $addr=$fields[1] }
+  elsif   ( substr($_,0,1) eq "A" ) { (@fields)=split(); push @addr,$fields[1] }
   elsif   ( substr($_,0,1) eq "C" ) { (@fields)=split(); $create_inbox_path=$fields[1] }
   elsif   ( substr($_,0,1) eq "M" ) { (@fields)=split(); $irods_master_server=$fields[1]; $irods_cmd_prefix = "irodsHost=$irods_master_server"; }
   elsif   ( substr($_,0,1) eq "H" ) { (@fields)=split(); $mail_host_from=$fields[1] }
@@ -181,12 +188,12 @@ for (my $j=1;$j<=20;$j++) {  # Note: mkuser won't properly handle a long DN
     if ( $create_inbox_path ) {
         `$create_inbox_path -u $user_name >/dev/null 2>&1`;
     };
-    mail_mess($addr, $dn_plus." => ".$user_name."#".$zone." .. Completed!");
+    mail_mess($dn_plus." => ".$user_name."#".$zone." .. Completed!", @addr);
     exit(0)
   }
 }
 
 # Failure
-mail_mess($addr, $dn_plus.": Username creation failed!");
+mail_mess($dn_plus.": Username creation failed!", @addr);
 die $dn_plus.": Username creation failed!\n";
 
