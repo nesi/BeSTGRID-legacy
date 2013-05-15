@@ -5,7 +5,7 @@
 #          Graham Jenkins <graham@vpac.org> Jan. 2009. Rev: 20091117
 
 # MyProxy Server
-[ -z "$MYPROXY_SERVER" ] && export MYPROXY_SERVER=myproxy2.arcs.org.au
+[ -z "$MYPROXY_SERVER" ] && export MYPROXY_SERVER=myproxy.nesi.org.nz
 
 # Usage check
 while getopts hLl: Option; do
