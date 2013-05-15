@@ -1,0 +1,48 @@
+# iRODS local rules for BeSTGRID sites
+# Based-on: iRODS local rules for ARCS sites
+#
+# ARCS: Default-resource must be set appropriately for your site (e.g. arcs-df.vpac.org)
+# BeSTGRID: Default resource has been set to griddata.canterbury.ac.nz
+
+# We need this one for createUser to work
+acGetUserByDN(*arg,*OUT)||msiExecCmd(createUser,'"*arg"',null,null,null,*OUT)|nop
+
+# ?? set default resource
+acPreprocForDataObjOpen||msiSetDataObjPreferredResc(griddata.canterbury.ac.nz)|nop
+#acPreprocForDataObjOpen||msiSetDataObjPreferredResc(DEFAULT_RESOURCE)|nop
+
+# not sure what this one does, better disable it now
+# acSetRescSchemeForCreate|$userNameClient == guest %% $userNameClient == anonymous|msiSetNoDirectRescInp(ARCS-FABRIC%arcs-df.ivec.org%arcs-df.vpac.org%arcs-df.qcif.edu.au%arcs-df.intersect.org.au%arcs-df.tpac.org.au%emii.resource.tpac.org.au%arcs-df.eresearchsa.edu.au)|nop
+
+# these look specific to ARCS projects, disable them
+#acSetRescSchemeForCreate|"$objPath" like "/ARCS/home/charlie.bond/*"|msiSetDefaultResc(arcs-df.ivec.org,preferred)|nop
+#acSetRescSchemeForCreate|"$objPath" like "/ARCS/projects/TCMIP/*"|msiSetDefaultResc(arcs-df.vpac.org,preferred)|nop
+#acSetRescSchemeForCreate|"$objPath" like "/ARCS/projects/PUBLUMW/*"|msiSetDefaultResc(arcs-df.vpac.org,preferred)|nop
+
+# this one also seems to set default resource
+acSetRescSchemeForCreate||msiSetDefaultResc(griddata.canterbury.ac.nz,preferred)|nop
+#acSetRescSchemeForCreate||msiSetDefaultResc(DEFAULT_RESOURCE,preferred)|nop
+
+# not sure what this one does but it might be useful
+acSetVaultPathPolicy||msiSetGraftPathScheme(no,0)|nop
+
+# this one is needed to make sure users can't browse other user's home directories by default
+#acAclPolicy||msiAclPolicy(STRICT)|nop
+#Exclude the QuickShare user from the STRICT policy:
+acAclPolicy|"$userNameClient" != "QuickShare"|msiAclPolicy(STRICT)|nop
+
+# this one again looks useful
+acTrashPolicy||nop|nop
+
+# These were commented out in arcs.irb
+#Adding rules to replicate
+#acPostProcForPut|"$objPath" not like "/ARCS/trash/*"|delayExec(<PLUSET>1s</PLUSET><EF>30s DOUBLE UNTIL SUCCESS OR 5 TIMES</EF>,msiSysReplDataObj(ARCS-FABRIC,null),nop)|nop
+#acPostProcForCopy|"$objPath" not like "/ARCS/trash/*"|delayExec(<PLUSET>1s</PLUSET><EF>30s DOUBLE UNTIL SUCCESS OR 5 TIMES</EF>,msiSysReplDataObj(ARCS-FABRIC,null),nop)|nop
+
+# This one again looks useful
+acSetReServerNumProc||msiSetReServerNumProc(4)|nop
+
+
+# uncomment this to make quotas strictly enforced
+# acRescQuotaPolicy||msiSetRescQuotaPolicy(on)|nop
+
