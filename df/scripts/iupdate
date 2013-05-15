@@ -1,0 +1,43 @@
+#!/bin/bash
+# iupdate  Updates ~irods/.irodsEnv by querying the iRODS Host defined therein
+#          to determine an appropriate value for 'irodsUserName' based on the
+#          user's GSI credentials.
+#          Graham Jenkins <graham@vpac.org> Jan. 2009. Rev: 20091117
+
+# MyProxy Server
+[ -z "$MYPROXY_SERVER" ] && export MYPROXY_SERVER=myproxy2.arcs.org.au
+
+# Usage check
+while getopts hLl: Option; do
+  case $Option in
+    l   ) User=$OPTARG;;
+    L   ) User=$LOGNAME;;
+    h|\?) Bad=Y;;
+  esac
+done
+shift `expr $OPTIND - 1`
+[ -n "$Bad" ] && echo "Usage: `basename $0` [-l myproxy-user | -L]">&2 && exit 2
+[ ! -f ~/.irods/.irodsEnv ] && echo "~/.irods/.irodsEnv not found" >&2 && exit 1
+
+# If requested, get a proxy
+if [ -n "$User" ] ; then
+  echo "Getting Proxy for User: $User from Server: $MYPROXY_SERVER .."
+  ! myproxy-logon -l "$User" -t 9999 && echo "Failed!"             >&2 && exit 1
+  myproxy-info -l "$User" 2>/dev/null | awk '{if($1=="timeleft:")print $0}'
+fi
+
+# If we have a proxy identity, use it to get our iRODS username
+myDn=`grid-proxy-info -identity 2>/dev/null`
+if [ -n "$myDn" ]; then
+  echo "Getting iRODS Username for DN: $myDn"
+  myDn="'""$myDn""'"
+  sed --in-place=.ORI -e '/^irodsUserName/d' ~/.irods/.irodsEnv
+  iuserinfo >/dev/null 2>&1 # Invoke automatic username creation if available
+  myUserName=`iquest "SELECT USER_NAME where USER_DN = $myDn" 2>/dev/null |
+    awk '{if ($1=="USER_NAME") print $3}'` 
+  if [ -n "$myUserName" ]; then
+    echo "irodsUserName '$myUserName'" | tee -a ~/.irods/.irodsEnv
+    exit 0
+  fi
+fi
+echo "Failed!" >&2 && exit 1
