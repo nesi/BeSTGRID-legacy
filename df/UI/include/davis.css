@@ -307,6 +307,7 @@ filter:alpha(opacity=50);
 #replicasButton {background:url(/images/btn_replicas.gif) no-repeat top left;}
 #renameButton {background:url(/images/btn_rename.gif) no-repeat top left;}
 #copyButton {background:url(/images/btn_copy.gif) no-repeat top left;}
+#trashRestoreButton {background:url(/images/btn_restore.gif) no-repeat top left;}
 #moveButton {background:url(/images/btn_move.gif) no-repeat top left;}
 #deleteButton {background:url(/images/btn_delete.gif) no-repeat top left;}
 #sharingButton {background:url(/images/btn_share.gif) no-repeat top left;}
