@@ -1,0 +1,37 @@
+#!/bin/bash
+# irods		Start/stop script for irods.
+#		Graham Jenkins <graham@vpac.org> Dec. 2008. Rev: 20110317
+#
+# chkconfig:	345 97 5
+# description:	irods server
+
+IRODS_USER=rods	# Adjust as appropriate
+IRODS_HOME=/opt/iRODS/iRODS
+X509_USER_CERT=/etc/grid-security/irodscert.pem
+X509_USER_KEY=/etc/grid-security/irodskey.pem
+PORTS="svrPortRangeStart=40000 svrPortRangeEnd=41000"
+
+. /etc/init.d/functions
+RETVAL=0
+
+Env="X509_USER_CERT=$X509_USER_CERT X509_USER_KEY=$X509_USER_KEY"
+Env="$Env LD_LIBRARY_PATH=/opt/vdt/globus/lib:/opt/iRODS-2.0v/Postgres/pgsql/lib"
+case "$1" in
+  start|restart )
+    [ "$1" = start ] && _P=istart || _P=irestart
+    runuser -s /bin/bash - $IRODS_USER -c \
+      "ulimit -c 81920; $Env $PORTS $IRODS_HOME/irodsctl $_P"
+    RETVAL=$?; echo; [ $RETVAL -eq 0 ] && touch /var/lock/subsys/`basename $0`
+    exit $RETVAL ;;
+  stop )
+    runuser -s /bin/bash - $IRODS_USER -c "$Env $IRODS_HOME/irodsctl istop"
+    RETVAL=$?; echo; [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/`basename $0`
+    exit $RETVAL ;;
+  status )
+    runuser -s /bin/bash - $IRODS_USER -c "$Env $IRODS_HOME/irodsctl $1"
+    RETVAL=$?; echo
+    exit $RETVAL ;;
+  * )
+    echo "Usage: $0 {start|stop|status|restart}"
+    exit 2 ;;
+esac

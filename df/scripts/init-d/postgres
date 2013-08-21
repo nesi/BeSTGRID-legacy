@@ -1,0 +1,30 @@
+#!/bin/bash
+# postgres	Start/stop script for irods postgres
+#		Graham Jenkins <graham@vpac.org> Jan. 2009. Rev: 20090219
+#
+# chkconfig:	345 63 37
+# description:	postgres server
+
+IRODS_USER=rods	# Adjust as appropriate
+IRODS_HOME=/opt/iRODS/iRODS
+. /etc/init.d/functions
+RETVAL=0
+
+case "$1" in
+  start|restart )
+    [ "$1" = start ] && _P=dbstart || _P=dbrestart
+    runuser -s /bin/bash - $IRODS_USER -c "$Env $PORTS $IRODS_HOME/irodsctl $_P"
+    RETVAL=$?; echo; [ $RETVAL -eq 0 ] && touch /var/lock/subsys/`basename $0`
+    exit $RETVAL ;;
+  stop )
+    runuser -s /bin/bash - $IRODS_USER -c "$Env $IRODS_HOME/irodsctl dbstop"
+    RETVAL=$?; echo; [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/`basename $0`
+    exit $RETVAL ;;
+  status )
+    runuser -s /bin/bash - $IRODS_USER -c "$Env $IRODS_HOME/irodsctl $1"
+    RETVAL=$?; echo
+    exit $RETVAL ;;
+  * )
+    echo "Usage: $0 {start|stop|status|restart}"
+    exit 2 ;;
+esac
