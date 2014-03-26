@@ -21,6 +21,15 @@
 #
 #
 # Changes:
+#   2014-03-26 Vladimir Mencl <vladimir.mencl@canterbury.ac.nz>
+#      - add support for checking a certificate in the file (-f)
+#      - add option for supporting a full DN instead of just CN (-D)
+#      - support both 32-bit and 64-bit platforms with "use lib" path
+#      - move some verbose ouput under DEBUG (-d)
+#      - FIX: add missing exit for expired certificate as per comment on plugin
+#        page
+#      - use POSIX:floor() instead of int() for rounding daysLeft
+#
 #   10/30/2008 dja <alden@math.ohio-state.edu>
 #      - fixed a bug which caused it to not deal with certs that expire
 #        on a single digit day (thanks to Christian Sava, Kyle Smith &
@@ -53,8 +62,11 @@
 #
 #
 use strict;
+use POSIX;
 use Time::Local;
 use Getopt::Long;
+# support both 32-bit and 64-bit environemnt
+use lib "/usr/lib/nagios/plugins";
 use lib "/usr/lib64/nagios/plugins";
 use utils qw(%ERRORS &print_revision &support &usage);
 
@@ -71,8 +83,11 @@ my $critical = 7;
 my $help;
 my $host;
 my $port = 443;
+my $certificate_file = '';
+my $useDN = 0;
 my $additional = '';
 my $verbose;
+my $debug = 0;
 my $version;
 my $warning = 30;
 
@@ -88,6 +103,9 @@ if (GetOptions(
 	       "c:s" => \$critical,
 	       "h"   => \$help,
 	       "H:s" => \$host,
+	       "f:s" => \$certificate_file,
+	       "D"   => \$useDN,
+	       "d"   => \$debug,
 	       "o=s" => \$openssl,
 	       "p=i" => \$port,
 	       "v"   => \$verbose,
@@ -109,12 +127,26 @@ if ($help) {
   exit $ERRORS{'OK'};
 }
 
-if (! utils::is_hostname($host)) {
+# accept either a hostname or a certificate file - but not both
+if (! $certificate_file && ! utils::is_hostname($host)) {
   usage("");
   exit $ERRORS{'UNKNOWN'};
 }
 
-open(OPENSSL, "$openssl s_client -connect $host:$port $additional < /dev/null 2>&1 | $openssl x509 -enddate -noout |") ||
+if ($host && $certificate_file) {
+    usage("You cannot specify both host and certificate_file\n");
+    exit $ERRORS{'UNKNOWN'};
+};
+
+my $openssl_cmd = "";
+
+if ($certificate_file ) {
+    $openssl_cmd = "$openssl x509 -enddate -noout -in $certificate_file $additional |"
+} else {
+    $openssl_cmd = "$openssl s_client -connect $host:$port $additional < /dev/null 2>&1 | $openssl x509 -enddate -noout |"
+};
+
+open(OPENSSL, "$openssl_cmd" ) ||
   die "unable to open $openssl: $!";
 
 my $date;
@@ -130,30 +162,61 @@ close(OPENSSL);
 $date =~ s/ +/ /g;
 
 my ($month, $day, $hour, $min, $sec, $year, $tz) = split(/[\s+|:]/, $date);
-print "m=$month, d=$day, h=$hour, m=$min, s=$sec, y=$year, z=$tz\n";
+print "m=$month, d=$day, h=$hour, m=$min, s=$sec, y=$year, z=$tz\n" if $debug;
 
-my $daysLeft = int((timegm($sec, $min, $hour, $day, $months{$month}, $year - 1900) - time()) / 86400);
+my $daysLeft = floor((timegm($sec, $min, $hour, $day, $months{$month}, $year - 1900) - time()) / 86400);
+print "daysLeft=$daysLeft\n" if $debug;
 
 my $cn="this certificate";
+# get the certificate name
 if ($verbose) {
+  # different handling for certificates in a file
+  if ($certificate_file) {
+    open(OPENSSL, "$openssl x509 -subject -noout -in $certificate_file $additional < /dev/null 2>&1 |") ||
+      die "unable to open $openssl: $!";
+    while (<OPENSSL>) {
+      if ( $_ =~ /^subject= (.*)/ ) {
+          # we found the subject line.
+          my $cert_subject = $1;
+          # if we can match a CN field, use that, otherwise the whole DN
+          if ( !$useDN && $cert_subject =~ /CN=([^\/=]*)/ ) {
+              $cn=$1;
+          } else {
+              $cn=$cert_subject;
+          };
+          $cn .= "[$certificate_file]";
+          last;
+      }
+    }
+    close(OPENSSL);
 
-  open(OPENSSL, "$openssl s_client -connect $host:$port $additional < /dev/null 2>&1 |") ||
-    die "unable to open $openssl: $!";
-
-  while (<OPENSSL>) {
-    next unless $_ =~ /Certificate chain/;
+  } else {
+    open(OPENSSL, "$openssl s_client -connect $host:$port $additional < /dev/null 2>&1 |") ||
+      die "unable to open $openssl: $!";
 
     while (<OPENSSL>) {
-      next unless $_ =~ /CN=(.*)/;
-      ($cn) = split(/\//, $1);
-      $cn .= "[$host]" if ($cn ne $host);
-      last;
+      next unless $_ =~ /Certificate chain/;
+
+      while (<OPENSSL>) {
+        next unless $_ =~ /^ 0 s:(.*)/;
+        my $cert_subject = $1;
+        # if we can match a CN field, use that, otherwise the whole DN
+        if ( !$useDN && $cert_subject =~ /CN=([^\/=]*)/ ) {
+            $cn=$1;
+        } else {
+            $cn=$cert_subject;
+        };
+        $cn .= "[$host]" if ($cn ne $host);
+        last;
+      }
     }
+    close(OPENSSL);
   }
 }
 
 if ($daysLeft < 0) {
   print "$PROGNAME: CRITICAL - $cn expired " . abs($daysLeft) . " day(s) ago.\n";
+  exit $ERRORS{'CRITICAL'};
 } elsif ($daysLeft <= $critical) {
   print "$PROGNAME: CRITICAL - only $daysLeft day(s) left for $cn.\n";
   exit $ERRORS{'CRITICAL'};
@@ -184,8 +247,11 @@ Check if an SSL certificate is close to expiring
 -H <host>  check the certificate on the indicated host
 -o <path>  path to openssl binary
 -p <port>  check the certificate on the specified port
+-f <file>  check instead a certificate in a specific file
+-D         use full DN instead of just CN in verbose output
 -w <num>   exit with WARNING status if number of days left is less than <num>
 -v         show the number of days left
+-d         show debug output
 -V         show version and license information
 ";
 
