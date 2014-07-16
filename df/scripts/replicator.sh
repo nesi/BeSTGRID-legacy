@@ -2,6 +2,7 @@
 # replicator.sh  Replicator script intended for invocation (as the iRODS user)
 #                from /etc/init.d/replicator
 #                Graham Jenkins <graham@vpac.org> Jan. 2010. Rev: 20101117
+#                Vladimir Mencl <vladimir.mencl@canterbury.ac.nz> - 2010-2014
 
 # Batch size, path, usage check
 BATCH=8
@@ -73,7 +74,7 @@ while [ -n "$NextIter" ] ; do
   while read Line || { echo "Replication pass almost complete - waiting for pending jobs" >&2 ; wait ; false ; } ; do
     [ -n "$ListOnly"  ] &&echo REPLIC: irepl -MBT -R $Resource "$Line"&&continue
     [ -n "$Verbose"  ]  &&echo REPLIC: irepl -MBT -R $Resource "$Line"
-    ( eval timeout 7200 irepl -MBT -R $Resource "$Line" ||
+    ( eval timeout 26400 irepl -MBT -R $Resource "$Line" ||
       logger -i -t `basename $0` "Failed: $Line"           ) &
     while [ `jobs | wc -l` -ge $BATCH ] ; do
       sleep 1
