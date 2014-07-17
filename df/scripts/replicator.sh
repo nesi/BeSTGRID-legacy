@@ -3,6 +3,14 @@
 #                from /etc/init.d/replicator
 #                Graham Jenkins <graham@vpac.org> Jan. 2010. Rev: 20101117
 #                Vladimir Mencl <vladimir.mencl@canterbury.ac.nz> - 2010-2014
+#                  2014-07-17: VM: remove timout wrapper on replication tasks -
+#                    no longer needed as BeSTGRID has no resources recalling
+#                    files from tapes (and getting stuck in the process).
+#                    Also remove escaped quotes pre-inserted in the awk code.
+#                    And add -r (raw) flag to read and -E (no backslash escape
+#                    interpretation) to echo - both to support backslashes in
+#                    filenames.
+ 
 
 # Batch size, path, usage check
 BATCH=8
@@ -65,17 +73,17 @@ while [ -n "$NextIter" ] ; do
     else {            # Extract file names from non-collection records,
       if ($1!="C-") { # and skip only stale replicas
         amperpos=index($0," & ")
-        if(amperpos>0) print "\""Dir"/"substr($0,amperpos+3)"\""
+        if(amperpos>0) print Dir"/"substr($0,amperpos+3)
       }
     }
   }' | uniq -u | sed 's/\$/\\\\$/g' | # shuf |
   
   # Feed the randomly-ordered list records into a parallel-job launch-pipe
-  while read Line || { echo "Replication pass almost complete - waiting for pending jobs" >&2 ; wait ; false ; } ; do
-    [ -n "$ListOnly"  ] &&echo REPLIC: irepl -MBT -R $Resource "$Line"&&continue
-    [ -n "$Verbose"  ]  &&echo REPLIC: irepl -MBT -R $Resource "$Line"
-    ( eval timeout 26400 irepl -MBT -R $Resource "$Line" ||
-      logger -i -t `basename $0` "Failed: $Line"           ) &
+  while read -r Line || { echo "Replication pass almost complete - waiting for pending jobs" >&2 ; wait ; false ; } ; do
+    [ -n "$ListOnly"  ] &&echo -E REPLIC: irepl -MBT -R $Resource "\"$Line\""&&continue
+    [ -n "$Verbose"  ]  &&echo -E REPLIC: irepl -MBT -R $Resource "\"$Line\""
+    ( irepl -MBT -R $Resource "$Line" ||
+      logger -i -t `basename $0` "Failed: \"$Line\""           ) &
     while [ `jobs | wc -l` -ge $BATCH ] ; do
       sleep 1
     done
