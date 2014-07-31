@@ -162,6 +162,19 @@ if ($num_rows == 0) {
    };
 };
 
+// regardless of whether we were creating the user, updating the data or only
+// updating last login time, record the session now
+$log_session_query = "INSERT INTO dfUserLogin (duSharedToken, duLoginTime, duIPAddress, duUserAgent) VALUES ( '" .
+    mysql_real_escape_string($user_data["duSharedToken"]) . "', NOW(), '" .
+    mysql_real_escape_string($_SERVER["REMOTE_ADDR"]) . "', '" .
+    mysql_real_escape_string($_SERVER["HTTP_USER_AGENT"]) . "');";
+print "Recording session: $log_session_query\n";
+$result = mysql_query($log_session_query);
+if ($result) {
+   print "Successfully recorded session (" . mysql_affected_rows() . " rows)\n";
+} else {
+   print "Failed to record session: " . mysql_error();
+};
 
 
 mysql_close($link);
