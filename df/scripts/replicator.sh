@@ -10,6 +10,12 @@
 #                    And add -r (raw) flag to read and -E (no backslash escape
 #                    interpretation) to echo - both to support backslashes in
 #                    filenames.
+#                  2014-09-24: VM: remove the inherited sed code that was
+#                    escaping every $ sign in file names with a double
+#                    backslash:
+#                        sed 's/\$/\\\\$/g' 
+#                    No longer needed since we are doing proper qutation when
+#                    using the filenames.
  
 
 # Batch size, path, usage check
@@ -76,12 +82,12 @@ while [ -n "$NextIter" ] ; do
         if(amperpos>0) print Dir"/"substr($0,amperpos+3)
       }
     }
-  }' | uniq -u | sed 's/\$/\\\\$/g' | # shuf |
+  }' | uniq -u | # shuf |
   
   # Feed the randomly-ordered list records into a parallel-job launch-pipe
   while read -r Line || { echo "Replication pass almost complete - waiting for pending jobs" >&2 ; wait ; false ; } ; do
-    [ -n "$ListOnly"  ] &&echo -E REPLIC: irepl -MBT -R $Resource "\"$Line\""&&continue
-    [ -n "$Verbose"  ]  &&echo -E REPLIC: irepl -MBT -R $Resource "\"$Line\""
+    [ -n "$ListOnly"  ] &&echo -E REPLIC: irepl -MBT -R $Resource "'$Line'"&&continue
+    [ -n "$Verbose"  ]  &&echo -E REPLIC: irepl -MBT -R $Resource "'$Line'"
     ( irepl -MBT -R $Resource "$Line" ||
       logger -i -t `basename $0` "Failed: \"$Line\""           ) &
     while [ `jobs | wc -l` -ge $BATCH ] ; do
