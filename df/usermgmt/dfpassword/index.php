@@ -130,8 +130,14 @@ if (!isset($_SERVER["HTTPS"]) || ($_SERVER["HTTPS"]!="on")) {
     $output = array();
     $lastline = exec("$iquest \"%s\" \"select USER_NAME where  USER_INFO like '<ST>" . escapeshellcmd($duSharedToken) . "</ST>'\"", $output, $retval);
 
-    if ( $retval != 0 || count($output) != 1 || ! ($duUserName = $output[0]) ) { 
-        # Either an error invoking iquest or no output found (where hard to tell apart - only option would be to look for CAT_NO_ROWS_FOUND in the output, not worth it 
+    if ( $retval != 0 || count($output) != 1 || strstr($output[0],":") || ! ($duUserName = $output[0]) ) { 
+        # Either an error invoking iquest or no record found.
+	# When no record is found, iquest (as of 3.3.1) does not indicate an
+	# error exit code (returns 0) and produces one line of output (so same
+        # as when displaying results); the line is exactly:
+        # CAT_NO_ROWS_FOUND: Nothing was found matching your query
+	# So we tell the difference by checking for a colon (":") which should
+        # not be present in a username.
         $isOK = false;
         $errMsg = "Unfortunately, we could not find your DataFabric account (based on your SharedToken value of " . htmlentities("$duSharedToken") . ").<p>\nPlease register first as a DataFabric user by going to <a href=\"$dfUrl\">$dfUrl</a> and logging in with your institutional login";
     };
