@@ -1,6 +1,6 @@
---- ui.html.orig	2012-07-27 11:15:10.000000000 +1200
-+++ ui.html	2012-10-11 11:28:30.000000000 +1300
-@@ -3217,12 +3217,12 @@
+--- ui.html.orig	2014-10-24 15:59:27.000000000 +1300
++++ ui.html	2014-10-29 13:55:24.319131655 +1300
+@@ -3212,12 +3212,12 @@
  			        				<tr>
  			        					<td id="sessionButtonsHTML" style="width:auto;" align="right" valign="top"></td>
  			        					<td align="right" style="width:100%;" valign="top">
