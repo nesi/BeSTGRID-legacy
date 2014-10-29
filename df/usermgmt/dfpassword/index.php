@@ -6,7 +6,7 @@
 # CONFIG
 include 'config.php';
 
-$st_name = 'shared-token';
+$st_name = 'auEduPersonSharedToken';
 $cn_name = 'cn';
 $idp_name = 'Shib-Identity-Provider';
 

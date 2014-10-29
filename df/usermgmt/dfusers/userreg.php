@@ -12,7 +12,7 @@ include 'config.php';
 //$notify_from = "BeSTGRID DataFabric <no-reply@$_SERVER[SERVER_NAME]";
 //$notify_subject_prefix = "BeSTGRID DataFabric";
 
-$st_name = 'shared-token';
+$st_name = 'auEduPersonSharedToken';
 $cn_name = 'cn';
 $o_name = 'o';
 $affiliation_name = 'unscoped-affiliation';
