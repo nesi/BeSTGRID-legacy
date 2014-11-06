@@ -16,6 +16,9 @@
 #                        sed 's/\$/\\\\$/g' 
 #                    No longer needed since we are doing proper qutation when
 #                    using the filenames.
+#                  2014-11-06: VM: apply the same fixes (remove sed escaping of
+#                  "$" and "\" and eval execution) also from the code handling
+#                  dirty replicas.
  
 
 # Batch size, path, usage check
@@ -54,17 +57,17 @@ while [ -n "$NextIter" ] ; do
       where COLL_NAME not like '/$Zone/trash/%'
       and   DATA_REPL_STATUS <> '1'
       and   DATA_SIZE        <> '0'" 2>/dev/null |
-        grep -v '^CAT_NO_ROWS_FOUND: Nothing was found matching your query$' | sed 's/\$/\\\\$/g' |
-    while read Object; do
-      eval ils -l "\"$Object\"" | grep " & " >/dev/null 2>&1 || continue
+        grep -v '^CAT_NO_ROWS_FOUND: Nothing was found matching your query$' | 
+    while read -r Object; do
+      ils -l "$Object" | grep " & " >/dev/null 2>&1 || continue
       [ -n "$ListOnly" ] && echo DIRTY: irepl -MUT "\"$Object\"" && continue
-      DirtyTotal=`eval ils -l "\"$Object\"" | grep -v " & " | wc -l`
+      DirtyTotal=`ils -l "$Object" | grep -v " & " | wc -l`
       for Count in `seq 1 $DirtyTotal`; do
         if [ -n "$ListOnly" -o -n "$Verbose" ] ; then
             echo irepl -MUT "\"$Object\""
             if [ -n "$ListOnly" ] ; then continue; fi
         fi
-        eval irepl -MUT "\"$Object\""
+        irepl -MUT "$Object"
       done
     done
   fi
