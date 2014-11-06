@@ -17,20 +17,66 @@
 #                    No longer needed since we are doing proper qutation when
 #                    using the filenames.
 #                  2014-11-06: VM: apply the same fixes (remove sed escaping of
-#                  "$" and "\" and eval execution) also from the code handling
-#                  dirty replicas.
+#                    "$" and "\" and eval execution) also from the code handling
+#                    dirty replicas.
+#                  2014-11-07: VM: add support for mapping path components to
+#                    individual resources.  In the replication loop, check if a
+#                    file already has a replica on the mapped resource.  If not,
+#                    replicate there, otherwise revert to the default resource.
  
+
+# support mappings of directories to resources
+REPLMAP_count=0
+# for each mapping (indexed from 0)
+# REPLMAP_<n>_DIR = /BeSTGRID/home/example
+# REPLMAP_<n>_RES = whatever.resource
+
+function addMapping {
+# accepts mapping as DIR:RES
+  DIR="$( echo "$1" | cut -d : -f 1 )"
+  RES="$( echo "$1" | cut -d : -f 2- )"
+  eval REPLMAP_${REPLMAP_count}_DIR="$DIR"
+  eval REPLMAP_${REPLMAP_count}_RES="$RES"
+  REPLMAP_count=$(( $REPLMAP_count + 1 ))
+}
+
+function listMappings {
+  REPLMAP_idx=0
+  while [ $REPLMAP_idx -lt $REPLMAP_count ] ; do
+    REPLMAP_DIR_VAR=REPLMAP_${REPLMAP_idx}_DIR
+    REPLMAP_RES_VAR=REPLMAP_${REPLMAP_idx}_RES
+    echo "Mapping path ${!REPLMAP_DIR_VAR} to resource ${!REPLMAP_RES_VAR}"
+    REPLMAP_idx=$(( $REPLMAP_idx + 1 ))
+  done
+}
+
+function findMapping {
+# accepts path name as parameter
+# returns mapped resource if found, blank otherwise
+  REPLMAP_idx=0
+  while [ $REPLMAP_idx -lt $REPLMAP_count ] ; do
+    REPLMAP_DIR_VAR=REPLMAP_${REPLMAP_idx}_DIR
+    REPLMAP_RES_VAR=REPLMAP_${REPLMAP_idx}_RES
+    if echo -E "$1" | grep -q ^${!REPLMAP_DIR_VAR} ; then
+        echo "${!REPLMAP_RES_VAR}"
+        break
+    fi
+    REPLMAP_idx=$(( $REPLMAP_idx + 1 ))
+  done
+}
+  
 
 # Batch size, path, usage check
 BATCH=8
 [ -z "$IRODS_HOME" ] && IRODS_HOME=/opt/iRODS/iRODS
 PATH=/bin:/usr/bin:$IRODS_HOME/clients/icommands/bin:/usr/local/bin
 Zone=`iquest "%s" "select ZONE_NAME" 2>/dev/null | head -1`
-while getopts nshlv Option; do
+while getopts nshlvM: Option; do
   case $Option in
     n   ) ListOnly=Y;;
     l   ) Loop=Y;;
     v   ) Verbose=Y;;
+    M   ) addMapping "$OPTARG";;
     s   ) Skip=Y ;;
     h|\?) Bad="Y"   ;;
   esac
@@ -44,6 +90,8 @@ shift `expr $OPTIND - 1`
     echo "         -l .. keep running in a loop (otherwise exit after one pass)"
     echo "         -v .. verbose (print out files being replicated)"
   ) >&2 && exit 2
+
+[ -n "$Verbose"  ]  && listMappings
 
 # Extract resource-name, loop forever
 Resource="$1"; shift
@@ -90,9 +138,24 @@ while [ -n "$NextIter" ] ; do
   
   # Feed the randomly-ordered list records into a parallel-job launch-pipe
   while read -r Line || { echo "Replication pass almost complete - waiting for pending jobs" >&2 ; wait ; false ; } ; do
-    [ -n "$ListOnly"  ] &&echo -E REPLIC: irepl -MBT -R $Resource "'$Line'"&&continue
-    [ -n "$Verbose"  ]  &&echo -E REPLIC: irepl -MBT -R $Resource "'$Line'"
-    ( irepl -MBT -R $Resource "$Line" ||
+    # we need to first determine whether this file maps to a dedicated resource - and if it isn't there yet, map it there.
+    MAPPED_Resource=$( findMapping "$Line" )
+    if [ -n "$MAPPED_Resource" ] ; then
+        [ -n "$Verbose"  ] && echo -E "File $Line is being mapped to $MAPPED_Resource"
+        # Hack: ils show resource names trimmed to 20 characters
+        MAPPED_Resource_ils="$( echo "$MAPPED_Resource" | cut -c 1-20 )"
+        if ils -l "$Line" | grep -q " $MAPPED_Resource_ils " ; then
+           # We already have a replica on the mapped resource, so leave it to default replication
+           [ -n "$Verbose"  ] && echo -E "File \"$Line\" already has a replica on $MAPPED_Resource, defaulting to $Resource"
+           MAPPED_Resource=""
+        fi
+    fi
+    # in the following use MAPPED_Resource if set, otherwise Resource
+    # in bash:  ${MAPPED_Resource:-$Resource}
+        
+    [ -n "$ListOnly"  ] &&echo -E REPLIC: irepl -MBT -R ${MAPPED_Resource:-$Resource} "'$Line'"&&continue
+    [ -n "$Verbose"  ]  &&echo -E REPLIC: irepl -MBT -R ${MAPPED_Resource:-$Resource} "'$Line'"
+    ( irepl -MBT -R ${MAPPED_Resource:-$Resource} "$Line" ||
       logger -i -t `basename $0` "Failed: \"$Line\""           ) &
     while [ `jobs | wc -l` -ge $BATCH ] ; do
       sleep 1
