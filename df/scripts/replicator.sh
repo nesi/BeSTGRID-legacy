@@ -53,7 +53,8 @@ while [ -n "$NextIter" ] ; do
     iquest --no-page "%s/%s" "select COLL_NAME,DATA_NAME
       where COLL_NAME not like '/$Zone/trash/%'
       and   DATA_REPL_STATUS <> '1'
-      and   DATA_SIZE        <> '0'" 2>/dev/null | sed 's/\$/\\\\$/g' |
+      and   DATA_SIZE        <> '0'" 2>/dev/null |
+        grep -v '^CAT_NO_ROWS_FOUND: Nothing was found matching your query$' | sed 's/\$/\\\\$/g' |
     while read Object; do
       eval ils -l "\"$Object\"" | grep " & " >/dev/null 2>&1 || continue
       [ -n "$ListOnly" ] && echo DIRTY: irepl -MUT "\"$Object\"" && continue
