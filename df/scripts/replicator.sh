@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/bash
 # replicator.sh  Replicator script intended for invocation (as the iRODS user)
 #                from /etc/init.d/replicator
 #                Graham Jenkins <graham@vpac.org> Jan. 2010. Rev: 20101117
