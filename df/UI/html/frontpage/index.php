@@ -8,6 +8,15 @@ $remote_addr = $_SERVER["REMOTE_ADDR"];
 $srv_name=`$geoip_path --client $remote_addr --servers $df_servers`;
 $srv_name=trim($srv_name);
 
+# if server name is blank, try our own server name
+if ( !$srv_name) { $srv_name = $_SERVER["SERVER_NAME"]; };
+
+# if the server name is not on the list, use the first off the list instead as the last resort.
+# add leading and trailing colons to search for exact match
+if (!strstr(":$df_servers:", ":$srv_name:")) {
+    $srv_names =preg_split("/:/",$df_servers); 
+    $srv_name=$srv_names[0];
+};
 
 # read properties
 include 'read-properties.php';
