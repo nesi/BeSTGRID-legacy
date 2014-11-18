@@ -121,7 +121,7 @@ my $dn_plus = "'".$ARGV[0]."'";
 if ( ($st_count == 1) && ($ARGV[0] =~ m/^\057/) ) {
   my $u1=`$path/iquest "select USER_NAME
                  where  USER_INFO like $st_plus
-                 and    USER_DN   <>   $dn_plus"  2>/dev/null |
+                 and    USER_DN   <>   $dn_plus"  2>/dev/null | grep -v '^CAT_NO_ROWS_FOUND: Nothing was found matching your query\$' |
     awk '/^USER_NAME/ {print \$3; exit}'`;
   chomp($u1);
   if ( "$u1" ne "" ) {
@@ -143,7 +143,7 @@ if ( ($st_count == 1) && ($ARGV[0] =~ m/^\057/) ) {
 # If the ST is attached to an existing iRODS username, update password and exit
 if ($st_count == 1) {
   my $u=`$path/iquest "select USER_NAME
-                       where  USER_INFO like $st_plus" 2>/dev/null |
+                       where  USER_INFO like $st_plus" 2>/dev/null | grep -v '^CAT_NO_ROWS_FOUND: Nothing was found matching your query\$' |
          awk '/^USER_NAME/ {print \$3;exit}'`;
   if ( defined($u) && (length($u)>0) ) {
     chomp($u);
@@ -153,8 +153,8 @@ if ($st_count == 1) {
 }
 
 # If the DN is attached to an existing iRODS username, exit
-`$irods_cmd_prefix $path/iquest "select USER_NAME where USER_DN = $dn_plus" >/dev/null 2>&1`;
-exit(0) if ! $?;
+`$irods_cmd_prefix $path/iquest "select USER_NAME where USER_DN = $dn_plus" 2>/dev/null | grep -q '^CAT_NO_ROWS_FOUND: Nothing was found matching your query\$' `;
+exit(0) if $?;
 
 # If there is a courtesy title, swallow it
 CT:
