@@ -1,22 +1,11 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
-<?
+<?php
 include 'config.php';
 
-$remote_addr = $_SERVER["REMOTE_ADDR"];
-$srv_name=`$geoip_path --client $remote_addr --servers $df_servers`;
-$srv_name=trim($srv_name);
-
-# if server name is blank, try our own server name
-if ( !$srv_name) { $srv_name = $_SERVER["SERVER_NAME"]; };
-
-# if the server name is not on the list, use the first off the list instead as the last resort.
-# add leading and trailing colons to search for exact match
-if (!strstr(":$df_servers:", ":$srv_name:")) {
-    $srv_names =preg_split("/:/",$df_servers); 
-    $srv_name=$srv_names[0];
-};
+# use our own server name as the fallback
+$srv_name = $_SERVER["SERVER_NAME"];
 
 # read properties
 include 'read-properties.php';
@@ -79,19 +68,80 @@ if ( $davis_properties['organisation-logo-geometry'] && strpos($davis_properties
 <!-- NO announcement -->
 <?php } ?>
 
-<p><em>Your nearest DataFabric server appears to be:</em> <strong><?=$srv_name?></strong></p>
+<div id="df_server_search_progress">
+<p><em>Determining your nearest DataFabric server ... While we are working, you can also log in to this server:</em> <strong><?=$srv_name?></strong></p>
+</div>
+<div id="df_server_search_result">
 <ul>
-<li>Log in using your institution's Identity Provider: <a href="http://<?=$srv_name?><?=$df_path?>">http://<?=$srv_name?><?=$df_path?></a>
-</li><li>Log in using your DataFabric username and password: <a href="https://<?=$srv_name?><?=$df_path?>">https://<?=$srv_name?><?=$df_path?></a>
+<li>Log in using your institution's Identity Provider: <a id="df_server_link_http" href="http://<?=$srv_name?><?=$df_path?>">http://<?=$srv_name?><?=$df_path?></a>
+</li><li>Log in using your DataFabric username and password: <a id="df_server_link_https" href="https://<?=$srv_name?><?=$df_path?>">https://<?=$srv_name?><?=$df_path?></a>
 </li>
 <p>
-
 <li>Access the DataFabric with the iDrop client: <strong><a href="http://iren-web.renci.org/idrop-release/idrop.jnlp">Start iDrop java client</a></strong> (Help: see <strong><a href="http://technical.bestgrid.org/index.php/Using_the_DataFabric#Accessing_the_DataFabric_with_iDrop">iDrop instructions</a></strong>)</li>
-
-
 </ul>
+</div>
+
 <h2>User instructions</h2>
 <p>For more information on accessing this service, please see the <strong><a href="http://technical.bestgrid.org/index.php/Using_the_DataFabric">Using the DataFabric</a></strong> manual.</p>
+
+<script language="javascript">
+
+var servers = [ 
+<?php
+    foreach ( preg_split("/:/",$df_servers) as $server) {
+      print "\t\"$server\",\n";
+    };
+?>
+              ]
+
+var rodsZone = "<?= $irodsZone ?>";
+var df_path = "<?= $df_path ?>";
+
+var bestServer = null;
+var bestTime = null;
+
+var debug=<?= isset($_REQUEST["debug"]) ? "true" : "false" ?>;
+
+function measureTime(serverHost) {
+  if (typeof XMLHttpRequest != "undefined") {  
+    var timer_client = new XMLHttpRequest(); 
+    // do a synchronous request
+    timer_client.open("GET", "http://"+serverHost+"/favicon.ico",false);
+    //timer_client.timeout=5000 // time-out after 5s...
+    var prevTime = Date.now();
+    timer_client.send(); 
+    var newTime = Date.now();
+    if (timer_client.status == 200) {
+        return (newTime-prevTime);
+    }
+  };                                           
+  return null;
+}
+
+for (i=0; i<servers.length; i++) {
+    // try each server twice
+    for (tryNr=0; tryNr<2; tryNr++) { 
+        if (debug) console.log("Trying "+servers[i] + " ... ");
+        serverTime = null
+        try {
+            serverTime = measureTime(servers[i]);
+        } catch (err) { console.error("Ooops " + err); }
+        if (debug) console.log(" ... time="+serverTime+"ms");
+        if (serverTime != null && 
+            (bestTime == null || serverTime < bestTime)) {
+            bestTime = serverTime;
+            bestServer = servers[i];
+        };
+    };
+};
+if (debug) console.log("Best server is "+bestServer+" (time="+bestTime+"ms)");
+document.getElementById("df_server_search_progress").innerHTML = "<p><em>Your nearest DataFabric server appears to be: </em> <strong>"+bestServer+"</strong></p>";
+document.getElementById("df_server_link_http").innerHTML = "http://" + bestServer + df_path
+document.getElementById("df_server_link_http").href = "http://" + bestServer + df_path
+document.getElementById("df_server_link_https").innerHTML = "https://" + bestServer + df_path
+document.getElementById("df_server_link_https").href = "https://" + bestServer + df_path
+
+</script>
 
 </body>
 </html>
