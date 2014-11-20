@@ -64,6 +64,21 @@ if ( $davis_properties['organisation-logo-geometry'] && strpos($davis_properties
                     </table>
 
 <h1><?=$df_title?></h1>
+
+<?php if (isset($df_announce) && ($df_announce != "") ) { ?>
+<!-- BEGIN: announcement -->
+<table border="1px" cellpadding="5" cellspacing="0" style="border-color: LightGrey; width: 85%; border-collapse: collapse;">
+<tr style="background: #FFFF99;" align="left">
+<td>
+<?= $df_announce ?>
+</td>
+</tr>
+</table>
+<!-- END: announcement -->
+<?php } else { ?>
+<!-- NO announcement -->
+<?php } ?>
+
 <p><em>Your nearest DataFabric server appears to be:</em> <strong><?=$srv_name?></strong></p>
 <ul>
 <li>Log in using your institution's Identity Provider: <a href="http://<?=$srv_name?><?=$df_path?>">http://<?=$srv_name?><?=$df_path?></a>
