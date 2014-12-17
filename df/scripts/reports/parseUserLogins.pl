@@ -112,6 +112,8 @@ while (<>) {
              ( $rods_session{"duUsername"} eq $rods_agent_launch{"username"} ) && 
              ( abs($rods_session{"duLoginTime"}->subtract_datetime_absolute($rods_agent_launch{"timestamp"})->seconds) < 5) ) {
           $rods_session{"duIPAddress"} = $rods_agent_launch{"ip_address"};
+        } else {
+          $rods_session{"duIPAddress"} = "";
         };
 	$rods_session{"duServerName"} = $main::local_hostname;
 
