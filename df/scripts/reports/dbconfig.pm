@@ -6,3 +6,5 @@ $main::hostname = "localhost";
 $main::user = "";
 $main::password = "";
 
+%main::ignore_users = ( "rods" => 1, "rodsBoot" => 1 );
+

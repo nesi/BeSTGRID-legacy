@@ -6,7 +6,7 @@ use DBI;
 use strict; # strongly recommended for DBI
 
 
-$main::verbose=1;
+$main::verbose=0;
 $main::debug=0;
 $main::dryrun=0; # if set to 1, skip writing to the database
 
@@ -20,6 +20,7 @@ $main::database = '';
 $main::hostname = '';
 $main::user = '';
 $main::password = '';
+%main::ignore_users = ();
 
 # load the config from the directory we are invoked from
 # the c
@@ -28,9 +29,9 @@ chomp $base_dir;
 do ($base_dir ne ""?$base_dir:".") . "/dbconfig.pm";
 
 while ($ARGV[0] =~ /^--/ ) {
-  if ($ARGV[0] eq "--verbose") { $main::verbose=1; }
+  if ($ARGV[0] eq "--verbose") { $main::verbose++; }
   elsif ($ARGV[0] eq "--no-verbose") { $main::verbose=0; }
-  elsif ($ARGV[0] eq "--debug") { $main::debug=1; }
+  elsif ($ARGV[0] eq "--debug") { $main::debug++; }
   elsif ($ARGV[0] eq "--no-debug") { $main::debug=0; }
   elsif ($ARGV[0] eq "--dry-run") { $main::dryrun=1; }
   elsif ($ARGV[0] eq "--no-dry-run") { $main::dryrun=0; }
@@ -131,7 +132,7 @@ while (<>) {
 	# source: parse user IP?
 
 	# Do we have sufficient information about the session
-	if (exists($rods_session{"duUsername"}) && $rods_session{"duUsername"} ) {
+	if (exists($rods_session{"duUsername"}) && $rods_session{"duUsername"} && !exists($main::ignore_users{$rods_session{"duUsername"}}) ) {
             ###Should we be excluding rods/QuickShare/anonymous ???
             ###&& ( $rods_session{"duUsername"} ne "QuickShare" ) && ( $rods_session{"duUsername"} ne "rods" ) && ( $rods_session{"duUsername"} ne "anonymous" ) 
 	    # insert the session into the database now
@@ -151,8 +152,8 @@ while (<>) {
                         $rods_session{"duIPAddress"}, $rods_session{"duServerName"});
             };
 	} else {
-	    if ($main::verbose >= 1) {
-		print "Incomplete session found:\n";
+	    if ($main::verbose >= 2) {
+		print "Incomplete or filtered out session found:\n";
 		foreach my $key (keys(%rods_session)) {
 		    print "Key: \"$key\" value: \"$rods_session{$key}\"\n";
 		};
