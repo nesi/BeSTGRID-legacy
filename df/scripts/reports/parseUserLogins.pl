@@ -99,7 +99,7 @@ while (<>) {
 		    print "Key: \"$key\" value: \"$rods_agent_launch{$key}\"\n";
 		};
         };
-    } elsif ( /^(.{15}) pid:(\d+) NOTICE: rsAuthResponse set proxy authFlag to.* client:([^ \n]*)$/ ) {
+    } elsif ( /^(.{15}) pid:(\d+) NOTICE: rsAuthResponse set proxy authFlag to.* client:([^ \n]+)$/ ) {
 	# Collect the information to record into rodsLog hash (with key names matching the database schema)
 	my %rods_session=();
         $rods_session{"duLoginTime"} = &parseRodsDateTime($1);
@@ -129,7 +129,7 @@ while (<>) {
 	# source: parse user IP?
 
 	# Do we have sufficient information about the session
-	if (exists($rods_session{"duUsername"}) ) {
+	if (exists($rods_session{"duUsername"}) && $rods_session{"duUsername"} ) {
             ###Should we be excluding rods/QuickShare/anonymous ???
             ###&& ( $rods_session{"duUsername"} ne "QuickShare" ) && ( $rods_session{"duUsername"} ne "rods" ) && ( $rods_session{"duUsername"} ne "anonymous" ) 
 	    # insert the session into the database now
