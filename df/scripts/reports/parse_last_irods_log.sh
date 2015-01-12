@@ -33,9 +33,9 @@ if [ "$1" == "--dry-run" ] ; then
    shift
 fi
 
-RODS_LOG_FILE="$IRODS_HOME/server/logs/rodsLog.$DATE_LOG_START"
+RODS_LOG_FILE="$IRODS_HOME/server/log/rodsLog.$DATE_LOG_START"
 
-PARSER_LOG_FILE="$IRODS_HOME/server/logs/parseUserLogins.log"
+PARSER_LOG_FILE="$IRODS_HOME/server/log/parseUserLogins.log"
 
 echo "Invoking $DIR_BASE/parseUserLogins.pl $PARSER_OPTIONS $RODS_LOG_FILE" >> $PARSER_LOG_FILE
 $DIR_BASE/parseUserLogins.pl $PARSER_OPTIONS $RODS_LOG_FILE >> $PARSER_LOG_FILE 2>&1
