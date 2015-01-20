@@ -1,0 +1,6 @@
+AuthType Basic
+AuthName "Grid Authorization Tool - University of Canterbury BlueFern NeSI systems"
+AuthBasicProvider external
+AuthExternal sshauth-nesi
+require valid-user
+SSLVerifyClient optional
