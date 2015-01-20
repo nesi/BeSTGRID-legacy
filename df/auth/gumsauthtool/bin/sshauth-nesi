@@ -1,0 +1,33 @@
+#!/usr/bin/expect -f
+
+#send_user "Username:\n"
+expect_user -re {^([^\n]*)\n} { 
+   set username $expect_out(1,string)
+}
+#send_user "Password:\n"
+expect_user -re {^([^\n]*)\n} { 
+   set password $expect_out(1,string)
+}
+if {[regexp {^[A-Za-z]?[-_A-Za-z0-9]*$} $username]} {
+  # username OK
+} else {
+  # send_user "Invalid username\n";
+  exit 51;
+}
+spawn ssh -o HostbasedAuthentication=no -o PasswordAuthentication=yes -o PubkeyAuthentication=no -o RhostsRSAAuthentication=no -o RSAAuthentication=no $username@bpfen1.canterbury.ac.nz echo Authenticated
+expect -re "assword:" { send "$password\r" }
+expect -brace { "Authenticated\r" { 
+        #send_user "Authentication successful\n"
+	#close
+	exit 0
+    }
+    "assword:" {
+	#send_user "Authentication failed\n"
+	close
+	exit 2
+    }
+}
+#send_user "Authentication failed\n"
+#close
+exit 52
+
