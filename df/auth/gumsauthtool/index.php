@@ -1,7 +1,7 @@
 <HTML><HEAD><TITLE>Canterbury HPC AuthTool</TITLE></HEAD><BODY>
 <h1>Welcome to the University of Canterbury HPC AuthTool</h1><p>
 
-The AuthTool requires that you have a certificate loaded in your browser, and that you have a login username and password for your account at the University of Canterbury HPC facility.<p>
+The AuthTool requires that you have a certificate loaded in your browser, and that you have a login username and password for your account at the University of Canterbury BlueFern NeSI systems.<p>
 
 <?php
 $user_DN = $_SERVER['SSL_CLIENT_S_DN'];
@@ -14,17 +14,11 @@ if ($user_DN) {
 };
 ?>
 
-You may access the AuthTool by several means:
-<ul>
-<li> Traditional AuthTool with certificate required: <a href="auth/">/hpc/auth/</a></li>
-<li> AuthTool with optional certificate (will return an error page when no certificate is provided <a href="auth-opt/">/hpc/auth-opt/</a></li>
-<li> Toy AuthTool with certificate required and any username accepted: <a href="auth-toy/">/hpc/auth-toy/</a></li>
-<li> Toy AuthTool with optional certificate (error page when no certificate is provided, any username accepted) <a href="auth-toy-opt/">/hpc/auth-toy-opt/</a></li>
-</ul>
+<ul><li><a href="auth-opt/">University of Canterbury BlueFern NeSI Auth Tool</a></li></ul>
 
 <?php
  if ($user_DN) {
-   print "<p>As you have your certificate loaded in your browser, you may also check your <a href=\"/gums/map_grid_identity.jsp?host=/C%3DNZ/O%3DBeSTGRID/OU%3DUniversity+of+Canterbury/CN%3Dng2hpc.canterbury.ac.nz&DN=".urlencode($user_DN)."&FQAN=\">Grid Identity Mapping</a> in the GUMS service.";
+   print "<p>As you have your certificate loaded in your browser, you may also check your <a href=\"/gums/map_grid_identity.jsp?host=/C%3DNZ/O%3DBeSTGRID/OU%3DUniversity+of+Canterbury/CN%3Dgram5p7.canterbury.ac.nz&DN=".urlencode($user_DN)."&FQAN=\">Grid Identity Mapping</a> in the GUMS service.";
   };
 ?>
 </BODY>
