@@ -2,6 +2,11 @@
 require "../config.php";
 require '../include/authlib.php';
 
+?>
+<HTML><HEAD><TITLE><?= $service_name_auth_certificate ?></TITLE></HEAD><BODY>
+<h1>Welcome to the <?= $service_name_auth_certificate ?></h1><p>
+<?php 
+
 // in this instance, get the DN from the client SSL cert
 $userDN = isset($_SERVER['SSL_CLIENT_S_DN']) ? $_SERVER['SSL_CLIENT_S_DN'] : "";
 
@@ -32,3 +37,5 @@ if ($username) {
 };
 
 ?>
+</BODY>
+</HTML>

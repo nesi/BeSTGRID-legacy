@@ -2,6 +2,11 @@
 require "../config.php";
 require '../include/authlib.php';
 
+?>
+<HTML><HEAD><TITLE><?= $service_name_auth_federated ?></TITLE></HEAD><BODY>
+<h1>Welcome to the <?= $service_name_auth_federated ?></h1><p>
+<?php
+
 $userDN = "";
 
 /* this is how myproxyplus maps a Shibboleth login to a DN (in myproxy-mapapp.pl):
@@ -58,3 +63,5 @@ if ($username) {
 };
 
 ?>
+</BODY>
+</HTML>

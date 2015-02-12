@@ -6,6 +6,8 @@ $lockfile = "/opt/mapauth/mapfile/grid-mapfile.lock";
 $external_auth = "/opt/pwauth/bin/pwauth";
 $site_name = "University of Example HPC system";
 $service_name = "$site_name DTN authentication and mapping tool";
+$service_name_auth_federated = "$site_name Auth Tool - Tuakiri login";
+$service_name_auth_certificate = "$site_name Auth Tool - certificate login";
 
 $user_DN_prefix = "/DC=nz/DC=org/DC=nesi/DC=myproxyplus";
 $user_DN_req_attrs = array( "cn", "o", "auEduPersonSharedToken");
