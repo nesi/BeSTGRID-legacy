@@ -3,7 +3,6 @@
 $mapfile = "/opt/mapauth/mapfile/grid-mapfile";
 $tempfile = "/opt/mapauth/mapfile/grid-mapfile.new";
 $lockfile = "/opt/mapauth/mapfile/grid-mapfile.lock";
-#$external_auth = "/opt/mapauth/bin/sshauth-nesi";
 $external_auth = "/opt/pwauth/bin/pwauth";
 $site_name = "University of Example HPC system";
 $service_name = "$site_name DTN authentication and mapping tool";
