@@ -100,13 +100,19 @@ var df_path = "<?= $df_path ?>";
 var bestServer = null;
 var bestTime = null;
 
+// determine the schema over which this page was accessed
+// and use the same schema when measuring performance
+// Even though it imposes a performance penalty,
+// browsers would otherwise complain / block access.
+var protocolSchema = <?= isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on" ? '"https"' : '"http"' ?>
+
 var debug=<?= isset($_REQUEST["debug"]) ? "true" : "false" ?>;
 
 function measureTime(serverHost) {
   if (typeof XMLHttpRequest != "undefined") {  
     var timer_client = new XMLHttpRequest(); 
     // do a synchronous request
-    timer_client.open("GET", "http://"+serverHost+"/favicon.ico",false);
+    timer_client.open("GET", protocolSchema+"://"+serverHost+"/favicon.ico",false);
     //timer_client.timeout=5000 // time-out after 5s...
     var prevTime = Date.now();
     timer_client.send(); 
