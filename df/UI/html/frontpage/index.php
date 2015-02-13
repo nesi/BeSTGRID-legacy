@@ -134,13 +134,18 @@ for (i=0; i<servers.length; i++) {
         };
     };
 };
-if (debug) console.log("Best server is "+bestServer+" (time="+bestTime+"ms)");
-document.getElementById("df_server_search_progress").innerHTML = "<p><em>Your nearest DataFabric server appears to be: </em> <strong>"+bestServer+"</strong></p>";
-document.getElementById("df_server_link_http").innerHTML = "http://" + bestServer + df_path
-document.getElementById("df_server_link_http").href = "http://" + bestServer + df_path
-document.getElementById("df_server_link_https").innerHTML = "https://" + bestServer + df_path
-document.getElementById("df_server_link_https").href = "https://" + bestServer + df_path
-
+if (bestServer) {
+    if (debug) console.log("Best server is "+bestServer+" (time="+bestTime+"ms)");
+    document.getElementById("df_server_search_progress").innerHTML = "<p><em>Your nearest DataFabric server appears to be: </em> <strong>"+bestServer+"</strong></p>";
+    document.getElementById("df_server_link_http").innerHTML = "http://" + bestServer + df_path
+    document.getElementById("df_server_link_http").href = "http://" + bestServer + df_path
+    document.getElementById("df_server_link_https").innerHTML = "https://" + bestServer + df_path
+    document.getElementById("df_server_link_https").href = "https://" + bestServer + df_path
+} else {
+    if (debug) console.log("Failed to determine the best server - all attempts failed");
+    document.getElementById("df_server_search_progress").innerHTML = "<p><em>Unfortunately, there was a problem contacting all of the DataFabric servers ... you mat still try to log in to this server: </em> <strong>"+"<?=$srv_name?>"+"</strong></p>";
+    // leave server links as originally created (with <?=$srv_name?>)
+};
 </script>
 
 </body>
