@@ -44,3 +44,14 @@ acSetVaultPathPolicy {msiSetGraftPathScheme("no","0"); }
 # Allow up to 4 RE processes
 acSetReServerNumProc {msiSetReServerNumProc("4"); }
 
+
+
+# auto delete feature - delete files in 1 week time
+acPostProcForPut {
+  ON($filePath like "\*/__autodelete__/\*") {
+    *expiryTime = "+168h"
+    msiSysMetaModify("expirytime", *expiryTime);
+    writeLine("serverLog","Set expiry in *expiryTime for file $filePath");
+  }
+}
+
