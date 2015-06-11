@@ -10,11 +10,7 @@
 
 # Use STRICT ACL policy, exception for QuickShare (allow QuickShare to see all directories)
 acAclPolicy {ON($userNameClient == "QuickShare") { } }
-# As of iRODS 3.3.1, rules processing does not stop on the first rule with
-# matching pre-condition, so we must explicitly specify non-match for the other
-# alternative
-acAclPolicy {ON($userNameClient != "QuickShare") { msiAclPolicy("STRICT"); } }
-##acAclPolicy {msiAclPolicy("STRICT"); }
+acAclPolicy {msiAclPolicy("STRICT"); }
 
 # Invoke createUser script when no GSI DN mapping exists 
 # This script either creates a mapping to an existing account (as identified by
