@@ -9,7 +9,7 @@ IRODS_USER=rods	# Adjust as appropriate
 IRODS_HOME=/opt/iRODS/iRODS
 X509_USER_CERT=/etc/grid-security/irodscert.pem
 X509_USER_KEY=/etc/grid-security/irodskey.pem
-PORTS="svrPortRangeStart=40000 svrPortRangeEnd=41000"
+PORTS="svrPortRangeStart=50000 svrPortRangeEnd=51000"
 
 . /etc/init.d/functions
 RETVAL=0
