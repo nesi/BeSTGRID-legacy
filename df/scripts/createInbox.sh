@@ -34,6 +34,9 @@ for User in $Users ; do
                 * ) continue ;; # 'madonna' will have to be processed manually!
   esac
   #
+  clientUserName=$Username imkdir -p "/$Zonename/home/$Username/__autodelete__"  ||
+    fail "Couldn't create directory: /$Zonename/home/$Username/__autodelete__"
+  #
   imkdir -p "/$Zonename/home/__INBOX/$Username"               ||
     fail "Couldn't create directory: /$Zonename/home/__INBOX/$Username"
   ichmod write public "/$Zonename/home/__INBOX/$Username"     &&
