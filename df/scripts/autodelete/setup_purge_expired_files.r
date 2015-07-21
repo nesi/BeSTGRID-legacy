@@ -14,7 +14,7 @@ setupPurgeExpiredFiles {
       msiGetValByKey(*List, "DATA_NAME", *D);
       msiGetValByKey(*List, "COLL_NAME", *E);
       msiSetACL("default", "admin:own", "rods", "*E/*D");
-      msiDataObjUnlink(*List, *Status);
+      msiDataObjUnlink("objPath=*E/*D++++forceFlag=", *Status);
       writeLine("serverLog", "Purged File *E/*D at *TimeStamp");
     }
   }
